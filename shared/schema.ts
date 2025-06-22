@@ -109,6 +109,7 @@ export const videos = pgTable("videos", {
   titleHindi: text("title_hindi").notNull(),
   description: text("description"),
   videoUrl: text("video_url").notNull(),
+  videoFile: text("video_file"), // Internal file path for uploaded videos
   thumbnailUrl: text("thumbnail_url"),
   subtitleUrl: text("subtitle_url"), // VTT format
   duration: text("duration"), // format: "HH:MM:SS"
@@ -118,6 +119,22 @@ export const videos = pgTable("videos", {
   viewCount: integer("view_count").default(0),
   uploadedBy: integer("uploaded_by").references(() => adminUsers.id),
   publishedAt: timestamp("published_at"),
+  slug: text("slug").unique(), // Unique URL slug for video access
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Advertisements table for Google Ads and other advertisements
+export const advertisements = pgTable("advertisements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  imageUrl: text("image_url").notNull(),
+  linkUrl: text("link_url"),
+  position: text("position").notNull(), // 'sidebar', 'header', 'footer', 'content'
+  isActive: boolean("is_active").default(true),
+  width: integer("width").default(300),
+  height: integer("height").default(250),
+  createdBy: integer("created_by").references(() => adminUsers.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -185,6 +202,12 @@ export const insertVideoSchema = createInsertSchema(videos).omit({
   updatedAt: true,
 });
 
+export const insertAdvertisementSchema = createInsertSchema(advertisements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertArticleDraftSchema = createInsertSchema(articleDrafts).omit({
   id: true,
   createdAt: true,
@@ -206,5 +229,7 @@ export type RssSource = typeof rssSources.$inferSelect;
 export type InsertRssSource = z.infer<typeof insertRssSourceSchema>;
 export type Video = typeof videos.$inferSelect;
 export type InsertVideo = z.infer<typeof insertVideoSchema>;
+export type Advertisement = typeof advertisements.$inferSelect;
+export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;
 export type ArticleDraft = typeof articleDrafts.$inferSelect;
 export type InsertArticleDraft = z.infer<typeof insertArticleDraftSchema>;

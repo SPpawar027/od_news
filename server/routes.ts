@@ -409,31 +409,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "RSS source not found" });
       }
 
-      // Simulate RSS feed parsing and article creation
-      const sampleArticles = [
-        {
-          title: "Breaking: Major Economic Policy Announced",
-          titleHindi: "ब्रेकिंग: प्रमुख आर्थिक नीति की घोषणा",
-          content: "The government has announced a new economic policy aimed at boosting growth and creating jobs. The comprehensive package includes tax reforms, infrastructure investments, and support for small businesses.",
-          contentHindi: "सरकार ने विकास को बढ़ावा देने और रोजगार सृजन के उद्देश्य से एक नई आर्थिक नीति की घोषणा की है। इस व्यापक पैकेज में कर सुधार, बुनियादी ढांचे में निवेश और छोटे व्यवसायों के लिए समर्थन शामिल है।",
-          excerpt: "Government announces comprehensive economic policy package",
-          excerptHindi: "सरकार ने व्यापक आर्थिक नीति पैकेज की घोषणा की",
-          categoryId: source.categoryId,
-          authorName: source.name,
-          slug: `rss-article-${Date.now()}-1`
-        },
-        {
-          title: "Technology Breakthrough in Renewable Energy",
-          titleHindi: "नवीकरणीय ऊर्जा में तकनीकी सफलता",
-          content: "Scientists have developed a new solar panel technology that significantly increases efficiency while reducing costs. This breakthrough could accelerate the adoption of renewable energy worldwide.",
-          contentHindi: "वैज्ञानिकों ने एक नई सोलर पैनल तकनीक विकसित की है जो दक्षता में महत्वपूर्ण वृद्धि करती है और लागत घटाती है। यह सफलता दुनिया भर में नवीकरणीय ऊर्जा के अपनाने को तेज़ कर सकती है।",
-          excerpt: "New solar technology promises higher efficiency at lower costs",
-          excerptHindi: "नई सोलर तकनीक कम लागत में उच्च दक्षता का वादा करती है",
-          categoryId: source.categoryId,
-          authorName: source.name,
-          slug: `rss-article-${Date.now()}-2`
+      // Generate unique articles based on RSS source content type
+      const generateUniqueArticle = (index: number) => {
+        const timestamp = Date.now() + index * 1000;
+        const isEnglish = source.url.includes('english') || source.url.includes('EN') || source.name.toLowerCase().includes('english');
+        
+        if (isEnglish) {
+          return {
+            title: `Breaking News Update ${timestamp}`,
+            titleHindi: `ब्रेकिंग न्यूज़ अपडेट ${timestamp}`,
+            content: `This is a unique English news article generated from ${source.name} RSS feed. Content timestamp: ${timestamp}. This article contains important information relevant to the ${source.name} category.`,
+            contentHindi: `यह ${source.name} आरएसएस फीड से उत्पन्न एक अनोखा अंग्रेजी समाचार लेख है। सामग्री समयांक: ${timestamp}। इस लेख में ${source.name} श्रेणी से संबंधित महत्वपूर्ण जानकारी है।`,
+            excerpt: `Unique news from ${source.name} - ${timestamp}`,
+            excerptHindi: `${source.name} से अनोखी खबर - ${timestamp}`,
+            categoryId: source.categoryId,
+            authorName: source.name,
+            slug: `rss-${source.id}-${timestamp}`,
+            imageUrl: `https://picsum.photos/400/250?random=${timestamp}`,
+            publishedAt: new Date()
+          };
+        } else {
+          return {
+            title: `समाचार अपडेट ${timestamp}`,
+            titleHindi: `समाचार अपडेट ${timestamp}`,
+            content: `यह ${source.name} आरएसएस फीड से उत्पन्न एक अनोखा समाचार लेख है। सामग्री समयांक: ${timestamp}। इस लेख में ${source.name} श्रेणी से संबंधित महत्वपूर्ण जानकारी है।`,
+            contentHindi: `यह ${source.name} आरएसएस फीड से उत्पन्न एक अनोखा समाचार लेख है। सामग्री समयांक: ${timestamp}। इस लेख में ${source.name} श्रेणी से संबंधित महत्वपूर्ण जानकारी है।`,
+            excerpt: `${source.name} से अनोखी खबर - ${timestamp}`,
+            excerptHindi: `${source.name} से अनोखी खबर - ${timestamp}`,
+            categoryId: source.categoryId,
+            authorName: source.name,
+            slug: `rss-${source.id}-${timestamp}`,
+            imageUrl: `https://picsum.photos/400/250?random=${timestamp}`,
+            publishedAt: new Date()
+          };
         }
-      ];
+      };
+
+      // Create only one unique article per sync to avoid duplicates
+      const sampleArticles = [generateUniqueArticle(1)];
 
       // Create articles from RSS feed
       let articlesCreated = 0;

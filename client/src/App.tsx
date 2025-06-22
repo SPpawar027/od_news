@@ -19,6 +19,8 @@ import AdminLiveTVPage from "@/pages/admin-live-tv";
 import AdminVideosPage from "@/pages/admin-videos";
 import AdminRSSPage from "@/pages/admin-rss";
 import AdminUsersPage from "@/pages/admin-users";
+import AdminBreakingNewsPage from "@/pages/admin-breaking-news";
+import AdminAdsPage from "@/pages/admin-ads";
 
 function Router() {
   return (
@@ -37,6 +39,8 @@ function Router() {
       <Route path="/admin/live-tv" component={AdminLiveTVPage} />
       <Route path="/admin/videos" component={AdminVideosPage} />
       <Route path="/admin/rss" component={AdminRSSPage} />
+      <Route path="/admin/breaking-news" component={AdminBreakingNewsPage} />
+      <Route path="/admin/ads" component={AdminAdsPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/*" component={AdminDashboard} />
       <Route component={NotFound} />

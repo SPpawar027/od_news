@@ -166,6 +166,61 @@ export default function RightSidebar() {
         </div>
       </div>
 
+      {/* Social Media */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900 font-hindi">सामाजिक मीडिया</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-2 gap-3">
+            <a 
+              href="https://facebook.com/odnews" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl text-white hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105"
+            >
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-2">
+                <span className="text-sm font-bold">📘</span>
+              </div>
+              <span className="text-xs font-semibold text-center">Facebook</span>
+            </a>
+            <a 
+              href="https://twitter.com/odnews" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl text-white hover:from-sky-600 hover:to-sky-700 transition-all transform hover:scale-105"
+            >
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-2">
+                <span className="text-sm font-bold">🐦</span>
+              </div>
+              <span className="text-xs font-semibold text-center">Twitter</span>
+            </a>
+            <a 
+              href="https://instagram.com/odnews" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl text-white hover:from-pink-600 hover:to-pink-700 transition-all transform hover:scale-105"
+            >
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-2">
+                <span className="text-sm font-bold">📷</span>
+              </div>
+              <span className="text-xs font-semibold text-center">Instagram</span>
+            </a>
+            <a 
+              href="https://youtube.com/odnews" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-red-600 to-red-700 rounded-xl text-white hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105"
+            >
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-2">
+                <span className="text-sm font-bold">📹</span>
+              </div>
+              <span className="text-xs font-semibold text-center">YouTube</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Quick Links */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-6 border-b border-gray-100">

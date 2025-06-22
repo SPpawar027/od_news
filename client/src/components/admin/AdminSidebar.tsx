@@ -16,7 +16,9 @@ import {
   ChevronRight,
   BarChart3,
   Tags,
-  Shield
+  Shield,
+  Zap,
+  Image
 } from "lucide-react";
 
 const navigation = [
@@ -47,6 +49,13 @@ const navigation = [
     description: "Entertainment Section"
   },
   {
+    name: "Breaking News",
+    href: "/admin/breaking-news",
+    icon: Zap,
+    description: "Breaking News Ticker",
+    badge: "URGENT"
+  },
+  {
     name: "RSS Feeds",
     href: "/admin/rss",
     icon: Rss,
@@ -63,6 +72,13 @@ const navigation = [
     href: "/admin/categories",
     icon: Tags,
     description: "Content Categories"
+  },
+  {
+    name: "Advertisements",
+    href: "/admin/ads",
+    icon: Image,
+    description: "Google Ads & Banners",
+    badge: "ADS"
   },
   {
     name: "User Management",

@@ -165,39 +165,47 @@ export default function LiveTVPage() {
               <div className="w-full h-full bg-black flex items-center justify-center">
                 {selectedStream.url ? (
                   <div className="w-full h-full relative">
-                    {/* YouTube Embed for demonstrable streaming */}
+                    {/* Enhanced Video Player with Multiple Sources */}
                     {selectedStream.name.includes('CNN') ? (
                       <iframe
-                        src="https://www.youtube.com/embed/live_stream?channel=UCupvZG-5ko_eiXAupbDfxWw&autoplay=1"
+                        src="https://www.youtube.com/embed/tkDUSYUAoEc?autoplay=1&mute=1"
                         className="w-full h-full"
                         allowFullScreen
                         title={`${selectedStream.nameHindi} Live Stream`}
-                        allow="autoplay; encrypted-media"
+                        allow="autoplay; encrypted-media; fullscreen"
                       />
                     ) : selectedStream.name.includes('Al Jazeera') ? (
                       <iframe
-                        src="https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJj3l8Bg&autoplay=1"
+                        src="https://www.youtube.com/embed/gCNeDWCI0vo?autoplay=1&mute=1"
                         className="w-full h-full"
                         allowFullScreen
                         title={`${selectedStream.nameHindi} Live Stream`}
-                        allow="autoplay; encrypted-media"
+                        allow="autoplay; encrypted-media; fullscreen"
                       />
                     ) : selectedStream.name.includes('France') ? (
                       <iframe
-                        src="https://www.youtube.com/embed/live_stream?channel=UCQfwfsi5VrQ8yKZ-UWmAEFg&autoplay=1"
+                        src="https://www.youtube.com/embed/tkDUSYUAoEc?autoplay=1&mute=1"
                         className="w-full h-full"
                         allowFullScreen
                         title={`${selectedStream.nameHindi} Live Stream`}
-                        allow="autoplay; encrypted-media"
+                        allow="autoplay; encrypted-media; fullscreen"
+                      />
+                    ) : selectedStream.url ? (
+                      <iframe
+                        src={selectedStream.url}
+                        className="w-full h-full"
+                        allowFullScreen
+                        title={`${selectedStream.nameHindi} Live Stream`}
+                        allow="autoplay; encrypted-media; fullscreen"
                       />
                     ) : (
-                      /* Direct video stream fallback */
+                      /* HLS Video Player */
                       <video
                         src={selectedStream.url}
                         controls
                         autoPlay
                         muted={isMuted}
-                        className="w-full h-full"
+                        className="w-full h-full object-cover"
                         crossOrigin="anonymous"
                         onError={(e) => {
                           console.error("Failed to load video stream:", e);

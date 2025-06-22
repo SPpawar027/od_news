@@ -67,20 +67,30 @@ export default function VideoManagement() {
     video.titleHindi.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Generate unique slug from title
+    const title = formData.get("title") as string;
+    const slug = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim('-') + '-' + Date.now();
     
     const data = {
       title: formData.get("title") as string,
       titleHindi: formData.get("titleHindi") as string,
       description: formData.get("description") as string,
       videoUrl: formData.get("videoUrl") as string,
+      videoFile: formData.get("videoFile") as string, // Internal file path
       thumbnailUrl: formData.get("thumbnailUrl") as string,
       duration: formData.get("duration") as string,
       tags: (formData.get("tags") as string).split(",").map(tag => tag.trim()),
       visibility: formData.get("visibility") as string,
       isVertical: formData.get("isVertical") === "true",
+      slug: editingVideo ? editingVideo.slug : slug, // Keep existing slug when editing
     };
 
     if (editingVideo) {
