@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Clock, TrendingUp, Filter, Calendar, Eye } from "lucide-react";
+import Header from "@/components/Header";
 import type { Article, Category } from "@shared/schema";
 
 export default function SearchPage() {
@@ -89,6 +90,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2">

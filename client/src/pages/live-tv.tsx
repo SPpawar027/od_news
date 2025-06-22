@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Users, Volume2, VolumeX, Maximize, MoreVertical } from "lucide-react";
+import Header from "@/components/Header";
 
 interface LiveStream {
   id: number;
@@ -65,6 +66,7 @@ export default function LiveTVPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2">
