@@ -46,8 +46,8 @@ export class MemStorage implements IStorage {
   private seedData() {
     // Categories
     const categoriesData = [
-      { id: 1, title: "Top News", titleHindi: "टॉप न्यूज़", slug: "top-news", icon: "📰", color: "#FF6B6B", createdAt: new Date() },
-      { id: 2, title: "Local", titleHindi: "स्थानीय", slug: "local", icon: "🏘️", color: "#4ECDC4", createdAt: new Date() },
+      { id: 1, title: "Top News", titleHindi: "टॉप न्यूज़", slug: "top-news", icon: "📰", color: "#dc2626", createdAt: new Date() },
+      { id: 2, title: "Politics", titleHindi: "राजनीति", slug: "politics", icon: "🏛️", color: "#059669", createdAt: new Date() },
       { id: 3, title: "National", titleHindi: "राष्ट्रीय", slug: "national", icon: "🇮🇳", color: "#45B7D1", createdAt: new Date() },
       { id: 4, title: "Cricket", titleHindi: "क्रिकेट", slug: "cricket", icon: "🏏", color: "#96CEB4", createdAt: new Date() },
       { id: 5, title: "Business", titleHindi: "व्यापार", slug: "business", icon: "💼", color: "#FFEAA7", createdAt: new Date() },

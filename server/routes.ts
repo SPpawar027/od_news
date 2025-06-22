@@ -1,15 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import adminRoutes from "./adminRoutes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Temporarily disable seeding to fix schema
-  // const { seedDatabase } = await import('./seedData');
-  // await seedDatabase();
-
-  // Admin panel routes
-  app.use("/api/v1/admin", adminRoutes);
+  // Seed database on startup
+  const { seedDatabase } = await import('./seedData');
+  await seedDatabase();
 
 
 
