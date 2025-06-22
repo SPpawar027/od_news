@@ -128,7 +128,7 @@ export default function AdminDashboard() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => window.location.href = '/admin/articles'}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Articles</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                 {statsLoading ? "..." : stats?.articles || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                Click to manage articles
               </p>
             </CardContent>
           </Card>

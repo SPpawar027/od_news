@@ -99,6 +99,145 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
+  // Article Management
+  app.get('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+    try {
+      const articlesList = await db
+        .select()
+        .from(articles)
+        .orderBy(desc(articles.createdAt));
+
+      res.json(articlesList);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      res.status(500).json({ message: "Failed to fetch articles" });
+    }
+  });
+
+  app.post('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+    try {
+      const validatedData = insertArticleSchema.parse(req.body);
+      
+      const [newArticle] = await db
+        .insert(articles)
+        .values({
+          ...validatedData,
+          publishedAt: new Date(),
+          createdAt: new Date()
+        })
+        .returning();
+
+      res.json(newArticle);
+    } catch (error) {
+      console.error('Error creating article:', error);
+      res.status(500).json({ message: "Failed to create article" });
+    }
+  });
+
+  app.put('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertArticleSchema.parse(req.body);
+      
+      const [updatedArticle] = await db
+        .update(articles)
+        .set(validatedData)
+        .where(eq(articles.id, id))
+        .returning();
+
+      if (!updatedArticle) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+
+      res.json(updatedArticle);
+    } catch (error) {
+      console.error('Error updating article:', error);
+      res.status(500).json({ message: "Failed to update article" });
+    }
+  });
+
+  app.delete('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const [deletedArticle] = await db
+        .delete(articles)
+        .where(eq(articles.id, id))
+        .returning();
+
+      if (!deletedArticle) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+
+      res.json({ message: "Article deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      res.status(500).json({ message: "Failed to delete article" });
+    }
+  });
+
+  app.post('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+    try {
+      const articleData = req.body;
+      
+      const [newArticle] = await db
+        .insert(articles)
+        .values({
+          ...articleData,
+          publishedAt: new Date(),
+          createdAt: new Date(),
+        })
+        .returning();
+
+      res.json(newArticle);
+    } catch (error) {
+      console.error('Error creating article:', error);
+      res.status(500).json({ message: "Failed to create article" });
+    }
+  });
+
+  app.put('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const articleData = req.body;
+
+      const [updatedArticle] = await db
+        .update(articles)
+        .set(articleData)
+        .where(eq(articles.id, articleId))
+        .returning();
+
+      if (!updatedArticle) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+
+      res.json(updatedArticle);
+    } catch (error) {
+      console.error('Error updating article:', error);
+      res.status(500).json({ message: "Failed to update article" });
+    }
+  });
+
+  app.delete('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+
+      const [deletedArticle] = await db
+        .delete(articles)
+        .where(eq(articles.id, articleId))
+        .returning();
+
+      if (!deletedArticle) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+
+      res.json({ message: "Article deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      res.status(500).json({ message: "Failed to delete article" });
+    }
+  });
+
   // User Management (Manager only)
   app.get('/api/admin/users', isAdminAuthenticated, hasPermission([UserRole.MANAGER]), async (req, res) => {
     try {

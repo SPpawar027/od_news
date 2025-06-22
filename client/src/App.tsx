@@ -9,6 +9,7 @@ import ArticlePage from "@/pages/article";
 import CategoryPage from "@/pages/category";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminArticles from "@/pages/admin/articles";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/articles" component={AdminArticles} />
       <Route component={NotFound} />
     </Switch>
   );
