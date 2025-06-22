@@ -1,8 +1,20 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { getAdminSession } from "./adminAuth";
+import { setupAdminRoutes } from "./adminRoutes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Admin session middleware
+  app.use(getAdminSession());
+
+  // Setup admin routes
+  await setupAdminRoutes(app);
+
+  // Seed database on startup
+  const { seedDatabase } = await import('./seedData');
+  await seedDatabase();
+
   // Categories API
   app.get("/api/categories", async (req, res) => {
     try {

@@ -12,6 +12,8 @@ import {
   type BreakingNews,
   type InsertBreakingNews
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -412,4 +414,99 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// export const storage = new MemStorage();
+
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id.toString()));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories).orderBy(categories.id);
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categories)
+      .values(insertCategory)
+      .returning();
+    return category;
+  }
+
+  async getArticles(limit = 10, offset = 0, categoryId?: number): Promise<Article[]> {
+    let query = db.select().from(articles);
+    
+    if (categoryId) {
+      query = query.where(eq(articles.categoryId, categoryId));
+    }
+    
+    return await query
+      .orderBy(desc(articles.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getArticleById(id: number): Promise<Article | undefined> {
+    const [article] = await db.select().from(articles).where(eq(articles.id, id));
+    return article || undefined;
+  }
+
+  async getTrendingArticles(limit = 5): Promise<Article[]> {
+    return await db
+      .select()
+      .from(articles)
+      .where(eq(articles.isTrending, true))
+      .orderBy(desc(articles.createdAt))
+      .limit(limit);
+  }
+
+  async createArticle(insertArticle: InsertArticle): Promise<Article> {
+    const [article] = await db
+      .insert(articles)
+      .values({
+        ...insertArticle,
+        categoryId: insertArticle.categoryId || null,
+        imageUrl: insertArticle.imageUrl || null,
+        isBreaking: insertArticle.isBreaking || false,
+        isTrending: insertArticle.isTrending || false,
+      })
+      .returning();
+    return article;
+  }
+
+  async getBreakingNews(): Promise<BreakingNews[]> {
+    return await db
+      .select()
+      .from(breakingNews)
+      .where(eq(breakingNews.isActive, true))
+      .orderBy(desc(breakingNews.createdAt));
+  }
+
+  async createBreakingNews(insertBreakingNews: InsertBreakingNews): Promise<BreakingNews> {
+    const [news] = await db
+      .insert(breakingNews)
+      .values({
+        ...insertBreakingNews,
+        isActive: insertBreakingNews.isActive || true,
+      })
+      .returning();
+    return news;
+  }
+}
+
+export const storage = new DatabaseStorage();
