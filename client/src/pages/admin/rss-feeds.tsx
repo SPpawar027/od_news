@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,9 +26,20 @@ interface RssFeed {
   feedUrl: string;
   description: string | null;
   descriptionHindi: string | null;
+  categoryId: number | null;
   lastFetched: Date | null;
   isActive: boolean | null;
   createdAt: Date | null;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  nameHindi: string;
+  slug: string;
+  icon: string;
+  color: string;
+  isActive: boolean | null;
 }
 
 const rssFeedSchema = z.object({
@@ -36,6 +48,7 @@ const rssFeedSchema = z.object({
   feedUrl: z.string().url("Valid RSS feed URL is required"),
   description: z.string().optional(),
   descriptionHindi: z.string().optional(),
+  categoryId: z.number().min(1, "Category is required"),
   isActive: z.boolean().default(true),
 });
 
@@ -55,12 +68,18 @@ export default function AdminRssFeeds() {
       feedUrl: "",
       description: "",
       descriptionHindi: "",
+      categoryId: 0,
       isActive: true,
     },
   });
 
   const { data: feeds = [], isLoading: feedsLoading } = useQuery({
     queryKey: ["/api/admin/rss-feeds"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
     enabled: isAuthenticated,
   });
 
@@ -278,6 +297,31 @@ export default function AdminRssFeeds() {
                         <FormControl>
                           <Input {...field} placeholder="https://feeds.bbci.co.uk/news/rss.xml" />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories?.map((category: Category) => (
+                              <SelectItem key={category.id} value={category.id.toString()}>
+                                {category.nameHindi}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -195,7 +195,7 @@ export default function AdminVideos() {
                   Admin
                 </button>
                 <span className="text-gray-300">/</span>
-                <span className="text-gray-900 font-medium">Videos</span>
+                <span className="text-gray-900 font-medium">Upload Video</span>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
@@ -218,8 +218,8 @@ export default function AdminVideos() {
       <div className="max-w-6xl mx-auto p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Video Management</h1>
-            <p className="mt-2 text-gray-600">Upload and manage your video content</p>
+            <h1 className="text-3xl font-bold text-gray-900">Upload Video</h1>
+            <p className="mt-2 text-gray-600">Upload and manage video content for the Videos section</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>

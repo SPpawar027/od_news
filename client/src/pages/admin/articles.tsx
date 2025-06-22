@@ -41,6 +41,7 @@ interface Article {
   excerptHindi: string;
   imageUrl: string | null;
   categoryId: number | null;
+  authorName: string | null;
   isBreaking: boolean | null;
   isTrending: boolean | null;
   publishedAt: Date | null;
@@ -65,6 +66,7 @@ const articleSchema = z.object({
   excerpt: z.string().min(1, "English excerpt is required"),
   excerptHindi: z.string().min(1, "Hindi excerpt is required"),
   categoryId: z.number().min(1, "Category is required"),
+  authorName: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   isBreaking: z.boolean().optional(),
   isTrending: z.boolean().optional(),
@@ -91,6 +93,7 @@ export default function AdminArticles() {
       excerpt: "",
       excerptHindi: "",
       categoryId: 0,
+      authorName: "",
       imageUrl: "",
       isBreaking: false,
       isTrending: false,
@@ -109,13 +112,7 @@ export default function AdminArticles() {
 
   const createArticleMutation = useMutation({
     mutationFn: async (data: ArticleFormData) => {
-      const response = await fetch("/api/admin/articles", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Failed to create article");
-      return response.json();
+      return await apiRequest("/api/admin/articles", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
@@ -137,13 +134,7 @@ export default function AdminArticles() {
 
   const updateArticleMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: ArticleFormData }) => {
-      const response = await fetch(`/api/admin/articles/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Failed to update article");
-      return response.json();
+      return await apiRequest(`/api/admin/articles/${id}`, "PUT", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
@@ -207,6 +198,7 @@ export default function AdminArticles() {
       excerpt: article.excerpt,
       excerptHindi: article.excerptHindi,
       categoryId: article.categoryId || 0,
+      authorName: article.authorName || "",
       imageUrl: article.imageUrl || "",
       isBreaking: article.isBreaking || false,
       isTrending: article.isTrending || false,
@@ -392,6 +384,19 @@ export default function AdminArticles() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="authorName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Author Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Reporter/Author name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <div className="space-y-4">
                       <FormField
                         control={form.control}
@@ -521,6 +526,12 @@ export default function AdminArticles() {
                           <Calendar className="w-3 h-3 mr-1" />
                           {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : "Draft"}
                         </div>
+                        {article.authorName && (
+                          <div className="flex items-center">
+                            <User className="w-3 h-3 mr-1" />
+                            {article.authorName}
+                          </div>
+                        )}
                         {article.imageUrl && (
                           <div className="flex items-center">
                             <Image className="w-3 h-3 mr-1" />

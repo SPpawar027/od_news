@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { eq, desc, and, like, or, sql } from "drizzle-orm";
 import { db } from "./db";
-import { adminUsers, articles, categories, videos, liveTv, rssFeeds, contentEnhancements, subtitles, breakingNews } from "@shared/schema";
-import { insertAdminUserSchema, insertVideoSchema, insertLiveTvSchema, insertRssFeedSchema, insertContentEnhancementSchema, insertSubtitleSchema, insertBreakingNewsSchema, insertArticleSchema, UserRole } from "@shared/schema";
+import { adminUsers, articles, categories, videos, liveTv, rssFeeds, subtitles, breakingNews } from "@shared/schema";
+import { insertAdminUserSchema, insertVideoSchema, insertLiveTvSchema, insertRssFeedSchema, insertSubtitleSchema, insertBreakingNewsSchema, insertArticleSchema, UserRole } from "@shared/schema";
 import { isAdminAuthenticated, hasPermission, verifyPassword, hashPassword, createDefaultAdminUser } from "./adminAuth";
 
 export async function setupAdminRoutes(app: Express) {

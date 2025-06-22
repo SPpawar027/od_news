@@ -206,7 +206,7 @@ export default function AdminLiveTv() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Live TV Management</h1>
-            <p className="mt-2 text-gray-600">Manage live television channels and streams</p>
+            <p className="mt-2 text-gray-600">Manage live TV channels accessible only through header Live TV menu</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>

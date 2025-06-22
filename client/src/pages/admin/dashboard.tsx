@@ -168,25 +168,27 @@ export default function AdminDashboard() {
                 {statsLoading ? "..." : stats?.categories || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                +19% from last month
+                {user.role !== 'LIMITED_EDITOR' ? '+19% from last month' : 'Available categories'}
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {statsLoading ? "..." : stats?.users || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                +201 since last hour
-              </p>
-            </CardContent>
-          </Card>
+          {user.role !== 'LIMITED_EDITOR' && user.role !== 'SUBTITLE_EDITOR' && user.role !== 'VIEWER' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statsLoading ? "..." : stats?.users || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Revenue analytics available
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Role Permissions */}
@@ -223,18 +225,23 @@ export default function AdminDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/articles'}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Article
-              </Button>
-              <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/breaking-news'}>
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Manage Breaking News
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Hash className="w-4 h-4 mr-2" />
-                AI Content Enhancement
-              </Button>
+              {(user.role === 'MANAGER' || user.role === 'EDITOR' || user.role === 'LIMITED_EDITOR') && (
+                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/articles'}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Article
+                </Button>
+              )}
+              {(user.role === 'MANAGER' || user.role === 'EDITOR') && (
+                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/breaking-news'}>
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Manage Breaking News
+                </Button>
+              )}
+              {user.role === 'VIEWER' && (
+                <Badge variant="secondary" className="w-full justify-center py-2">
+                  View Only Access
+                </Badge>
+              )}
             </CardContent>
           </Card>
 
@@ -250,18 +257,35 @@ export default function AdminDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/videos'}>
-                <Video className="w-4 h-4 mr-2" />
-                Upload Video
-              </Button>
-              <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/live-tv'}>
-                <Tv className="w-4 h-4 mr-2" />
-                Manage Live TV
-              </Button>
-              <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/rss-feeds'}>
-                <Rss className="w-4 h-4 mr-2" />
-                RSS Feed Management
-              </Button>
+              {(user.role === 'MANAGER' || user.role === 'EDITOR' || user.role === 'LIMITED_EDITOR' || user.role === 'SUBTITLE_EDITOR') && (
+                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/videos'}>
+                  <Video className="w-4 h-4 mr-2" />
+                  Upload Video
+                </Button>
+              )}
+              {(user.role === 'MANAGER' || user.role === 'EDITOR') && (
+                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/live-tv'}>
+                  <Tv className="w-4 h-4 mr-2" />
+                  Manage Live TV
+                </Button>
+              )}
+              {(user.role === 'MANAGER' || user.role === 'EDITOR') && (
+                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/rss-feeds'}>
+                  <Rss className="w-4 h-4 mr-2" />
+                  RSS Feed Management
+                </Button>
+              )}
+              {user.role === 'SUBTITLE_EDITOR' && (
+                <Button className="w-full justify-start" variant="outline">
+                  <Hash className="w-4 h-4 mr-2" />
+                  Manage Subtitles
+                </Button>
+              )}
+              {user.role === 'VIEWER' && (
+                <Badge variant="secondary" className="w-full justify-center py-2">
+                  View Only Access
+                </Badge>
+              )}
             </CardContent>
           </Card>
 

@@ -52,6 +52,7 @@ export const articles = pgTable("articles", {
   excerptHindi: text("excerpt_hindi").notNull(),
   imageUrl: text("image_url"),
   categoryId: integer("category_id").references(() => categories.id),
+  authorName: text("author_name"), // Reporter/Author name
   isBreaking: boolean("is_breaking").default(false),
   isTrending: boolean("is_trending").default(false),
   publishedAt: timestamp("published_at").defaultNow(),
@@ -118,20 +119,7 @@ export const rssFeeds = pgTable("rss_feeds", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Content enhancements and AI generated hashtags
-export const contentEnhancements = pgTable("content_enhancements", {
-  id: serial("id").primaryKey(),
-  articleId: integer("article_id").references(() => articles.id),
-  videoId: integer("video_id").references(() => videos.id),
-  aiGeneratedTags: text("ai_generated_tags"), // JSON string
-  enhancedContent: text("enhanced_content"),
-  enhancedContentHindi: text("enhanced_content_hindi"),
-  seoKeywords: text("seo_keywords"), // JSON string
-  isApplied: boolean("is_applied").default(false),
-  createdBy: integer("created_by").references(() => adminUsers.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Removed AI Content Enhancement features as requested
 
 // Subtitle management
 export const subtitles = pgTable("subtitles", {
@@ -193,11 +181,7 @@ export const insertRssFeedSchema = createInsertSchema(rssFeeds).omit({
   lastFetched: true,
 });
 
-export const insertContentEnhancementSchema = createInsertSchema(contentEnhancements).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Removed AI Content Enhancement schema as requested
 
 export const insertSubtitleSchema = createInsertSchema(subtitles).omit({
   id: true,
@@ -222,8 +206,7 @@ export type LiveTv = typeof liveTv.$inferSelect;
 export type InsertLiveTv = z.infer<typeof insertLiveTvSchema>;
 export type RssFeed = typeof rssFeeds.$inferSelect;
 export type InsertRssFeed = z.infer<typeof insertRssFeedSchema>;
-export type ContentEnhancement = typeof contentEnhancements.$inferSelect;
-export type InsertContentEnhancement = z.infer<typeof insertContentEnhancementSchema>;
+// Removed ContentEnhancement types as requested
 export type Subtitle = typeof subtitles.$inferSelect;
 export type InsertSubtitle = z.infer<typeof insertSubtitleSchema>;
 
