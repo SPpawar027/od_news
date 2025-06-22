@@ -4,7 +4,7 @@ import { LAYOUT_CONFIG } from "@/lib/constants";
 
 export default function RightSidebar() {
   const { data: trendingArticles = [] } = useQuery<Article[]>({
-    queryKey: ["/api/articles/trending"],
+    queryKey: ["/api/trending-articles"],
   });
 
   return (

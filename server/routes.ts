@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trending articles API
-  app.get("/api/articles/trending", async (req, res) => {
+  app.get("/api/trending-articles", async (req, res) => {
     try {
       const { limit = "5" } = req.query;
       const limitNum = parseInt(limit as string);
