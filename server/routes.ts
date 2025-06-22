@@ -1,11 +1,15 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import adminRoutes from "./adminRoutes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database on startup
   const { seedDatabase } = await import('./seedData');
   await seedDatabase();
+
+  // Admin routes
+  app.use("/api/admin", adminRoutes);
 
   // Categories API
   app.get("/api/categories", async (req, res) => {

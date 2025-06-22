@@ -1,5 +1,5 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export interface AdminUser {
   id: number;
@@ -14,61 +14,61 @@ export interface LoginCredentials {
 }
 
 export function useAdminAuth() {
-  const { data: user, isLoading, error } = useQuery<AdminUser>({
-    queryKey: ["/api/admin/me"],
-    retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const queryClient = useQueryClient();
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await fetch("/api/admin/login", {
+      const response = await apiRequest("/api/admin/login", {
         method: "POST",
+        body: JSON.stringify(credentials),
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Login failed");
-      }
-      
-      return response.json();
+      return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/me"] });
+    onSuccess: (data) => {
+      // Store the token
+      localStorage.setItem("admin_token", data.token);
+      // Invalidate and refetch user data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/profile"] });
     },
   });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/admin/logout", {
-        method: "POST",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
+      localStorage.removeItem("admin_token");
       queryClient.clear();
-      window.location.href = "/admin/login";
     },
   });
 
+  const { data: admin, isLoading } = useQuery({
+    queryKey: ["/api/admin/profile"],
+    queryFn: async () => {
+      const token = localStorage.getItem("admin_token");
+      if (!token) return null;
+
+      try {
+        const response = await apiRequest("/api/admin/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return response;
+      } catch (error) {
+        localStorage.removeItem("admin_token");
+        throw error;
+      }
+    },
+    retry: false,
+  });
+
   return {
-    user,
+    admin,
     isLoading,
-    isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    logout: logoutMutation.mutateAsync,
-    isLoggingIn: loginMutation.isPending,
-    isLoggingOut: logoutMutation.isPending,
-    loginError: loginMutation.error,
+    isAuthenticated: !!admin,
+    login: loginMutation.mutate,
+    logout: logoutMutation.mutate,
+    isLoginPending: loginMutation.isPending,
   };
 }

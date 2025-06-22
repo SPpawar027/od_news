@@ -1,0 +1,55 @@
+📌 OVERVIEW
+Create a single-page, responsive Admin Panel (React + Vite + Tailwind CSS for the front-end; Node.js + Express + MongoDB for the back-end) that cleanly separates content, video, and live-TV management.  It must include an AI-enhanced CMS that auto-generates hashtags and headline suggestions in Hindi & English.
+
+📌 CORE MODULES & FEATURES
+1. **AI-Enhanced Content Management**
+   - Rich-text editor (TipTap or Draft.js) with AI button:  
+     • “Summarise”, “Improve Tone”, and “Generate Hashtags”.  
+   - Auto-save drafts, version history, scheduled publishing.
+
+2. **Live-TV Management**
+   - CRUD form for streams (fields: Stream Name, Type ←{M3U8 | YouTube | Custom}, URL, Status toggle).  
+   - Real-time preview player (use hls.js for M3U8).
+
+3. **Video Management – Entertainment Section**
+   - Upload/URL form for vertical videos (max 9:16 aspect).  
+   - Auto-generate thumbnail; optional subtitle upload (VTT).  
+   - Store metadata: Title, Tags, Duration, Publish Date, Visibility.
+
+4. **RSS Feed Management**
+   - Add/Edit/Delete RSS sources.  
+   - Background worker to fetch every 30 min → store items → show “Import” button beside each item.
+
+5. **User & Role Management**
+   - Five roles with explicit permissions:  
+     • **Manager** – full CRUD + role/permission admin.  
+     • **Editor** – CRUD on all content; no delete & cannot touch roles/permissions.  
+     • **Limited Editor** – same as Editor but hide any “Revenue” pages/API.  
+     • **Subtitle Editor** – only access Subtitle tab in Video module.  
+     • **Viewer** – read-only everywhere.
+   - JWT-based auth; bcrypt passwords; UI-side route guards.
+
+📌 UI/UX REQUIREMENTS
+- Left sidebar nav with icons; expandable groups for “Content”, “Videos”, “Live TV”, “RSS”, “Users”.
+- Top bar: search-everything box + profile dropdown (role shown).
+- All buttons, menus, and table rows MUST be clickable (use headlessui & @tanstack/react-table).
+- Dark/Light theme toggle.
+- Hindi labels where appropriate.
+
+📌 DATA MODELS (Mongoose)
+Include schemas for User, Article, Video, Stream, RssSource, RssItem.
+
+📌 ROUTES
+Prefix all API routes with /api/v1. Protect routes by role middleware.
+
+📌 SETUP & INSTRUCTIONS
+- Provide a single repo structured: /client (React) + /server (Node).  
+- Seed script: creates one Manager user (email: admin@jwt.com, pass: Admin@123).  
+- Include an .env.example file.  
+- Add detailed README with Replit run scripts and build commands.
+
+📌 QUALITY & TESTING
+- ESLint + Prettier configs.  
+- Unit tests with Vitest + Supertest for critical routes.  
+- Responsive check @ ≥1280px, 1024px, 640px.  
+- Comment every function.
