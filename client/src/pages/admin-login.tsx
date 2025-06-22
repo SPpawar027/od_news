@@ -33,12 +33,31 @@ export default function AdminLogin() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      const response = await apiRequest("/api/admin/login", "POST", data);
-      return response;
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Login failed");
+      }
+      
+      return response.json();
     },
-    onSuccess: () => {
-      setLocation("/admin/dashboard");
+    onSuccess: (data) => {
+      if (data.token) {
+        localStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_user', JSON.stringify(data.user));
+        setLocation("/admin/dashboard");
+      }
     },
+    onError: (error) => {
+      console.error("Login error:", error);
+    }
   });
 
   const onSubmit = (data: LoginForm) => {
@@ -168,7 +187,7 @@ export default function AdminLogin() {
                 {loginMutation.isError && (
                   <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
                     <AlertDescription className="text-red-800 dark:text-red-200">
-                      Invalid credentials. Please check your email and password.
+                      {loginMutation.error?.message || "Invalid credentials. Please check your email and password."}
                     </AlertDescription>
                   </Alert>
                 )}
