@@ -251,7 +251,7 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
                   <SelectContent>
                     {categories.map((category: Category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
+                        {category.title}
                       </SelectItem>
                     ))}
                   </SelectContent>

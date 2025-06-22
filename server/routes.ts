@@ -216,7 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stream = await storage.createLiveStream(streamData);
       res.status(201).json(stream);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create live stream" });
+      console.error("Live stream creation error:", error);
+      res.status(500).json({ error: "Failed to create live stream", details: error.message });
     }
   });
 
@@ -404,7 +405,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.status(201).json(article);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create article" });
+      console.error("Article creation error:", error);
+      res.status(500).json({ error: "Failed to create article", details: error.message });
     }
   });
 
