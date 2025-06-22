@@ -35,11 +35,12 @@ export const users = pgTable("users", {
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  nameHindi: text("name_hindi").notNull(),
+  title: text("title").notNull(),
+  titleHindi: text("title_hindi").notNull(),
   slug: text("slug").notNull().unique(),
   icon: text("icon").notNull(),
   color: text("color").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const articles = pgTable("articles", {

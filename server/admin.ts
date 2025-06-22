@@ -133,11 +133,221 @@ export async function setupAdminPanel(app: Express) {
       const categoriesList = await db
         .select()
         .from(categories)
-        .orderBy(categories.name);
+        .orderBy(categories.title);
       res.json(categoriesList);
     } catch (error) {
       console.error("Categories error:", error);
       res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  // Article CRUD operations
+  app.post('/api/admin/articles', isAdmin, async (req, res) => {
+    try {
+      const { title, titleHindi, content, contentHindi, excerpt, excerptHindi, categoryId, imageUrl, authorName, isBreaking, isTrending } = req.body;
+
+      const [newArticle] = await db.insert(articles).values({
+        title,
+        titleHindi,
+        content,
+        contentHindi,
+        excerpt,
+        excerptHindi,
+        categoryId: categoryId || null,
+        imageUrl: imageUrl || null,
+        authorName: authorName || null,
+        isBreaking: isBreaking || false,
+        isTrending: isTrending || false,
+        publishedAt: new Date(),
+        createdAt: new Date()
+      }).returning();
+
+      res.json(newArticle);
+    } catch (error) {
+      console.error("Create article error:", error);
+      res.status(500).json({ message: "Failed to create article" });
+    }
+  });
+
+  app.put('/api/admin/articles/:id', isAdmin, async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const { title, titleHindi, content, contentHindi, excerpt, excerptHindi, categoryId, imageUrl, authorName, isBreaking, isTrending } = req.body;
+
+      const [updatedArticle] = await db.update(articles)
+        .set({
+          title,
+          titleHindi,
+          content,
+          contentHindi,
+          excerpt,
+          excerptHindi,
+          categoryId: categoryId || null,
+          imageUrl: imageUrl || null,
+          authorName: authorName || null,
+          isBreaking: isBreaking || false,
+          isTrending: isTrending || false,
+        })
+        .where(eq(articles.id, articleId))
+        .returning();
+
+      if (!updatedArticle) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+
+      res.json(updatedArticle);
+    } catch (error) {
+      console.error("Update article error:", error);
+      res.status(500).json({ message: "Failed to update article" });
+    }
+  });
+
+  app.delete('/api/admin/articles/:id', isAdmin, async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+
+      const [deletedArticle] = await db.delete(articles)
+        .where(eq(articles.id, articleId))
+        .returning();
+
+      if (!deletedArticle) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+
+      res.json({ message: "Article deleted successfully" });
+    } catch (error) {
+      console.error("Delete article error:", error);
+      res.status(500).json({ message: "Failed to delete article" });
+    }
+  });
+
+  // Category CRUD operations
+  app.post('/api/admin/categories', isAdmin, async (req, res) => {
+    try {
+      const { title, titleHindi } = req.body;
+
+      const [newCategory] = await db.insert(categories).values({
+        title,
+        titleHindi,
+        createdAt: new Date()
+      }).returning();
+
+      res.json(newCategory);
+    } catch (error) {
+      console.error("Create category error:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.put('/api/admin/categories/:id', isAdmin, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const { title, titleHindi } = req.body;
+
+      const [updatedCategory] = await db.update(categories)
+        .set({ title, titleHindi })
+        .where(eq(categories.id, categoryId))
+        .returning();
+
+      if (!updatedCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error("Update category error:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete('/api/admin/categories/:id', isAdmin, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+
+      const [deletedCategory] = await db.delete(categories)
+        .where(eq(categories.id, categoryId))
+        .returning();
+
+      if (!deletedCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Delete category error:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Breaking news CRUD operations
+  app.get('/api/admin/breaking-news', isAdmin, async (req, res) => {
+    try {
+      const breakingNewsList = await db
+        .select()
+        .from(breakingNews)
+        .orderBy(desc(breakingNews.createdAt));
+      res.json(breakingNewsList);
+    } catch (error) {
+      console.error("Breaking news error:", error);
+      res.status(500).json({ message: "Failed to fetch breaking news" });
+    }
+  });
+
+  app.post('/api/admin/breaking-news', isAdmin, async (req, res) => {
+    try {
+      const { title, titleHindi } = req.body;
+
+      const [newBreakingNews] = await db.insert(breakingNews).values({
+        title,
+        titleHindi,
+        isActive: true,
+        createdAt: new Date()
+      }).returning();
+
+      res.json(newBreakingNews);
+    } catch (error) {
+      console.error("Create breaking news error:", error);
+      res.status(500).json({ message: "Failed to create breaking news" });
+    }
+  });
+
+  app.put('/api/admin/breaking-news/:id', isAdmin, async (req, res) => {
+    try {
+      const breakingId = parseInt(req.params.id);
+      const { title, titleHindi, isActive } = req.body;
+
+      const [updatedBreaking] = await db.update(breakingNews)
+        .set({ title, titleHindi, isActive })
+        .where(eq(breakingNews.id, breakingId))
+        .returning();
+
+      if (!updatedBreaking) {
+        return res.status(404).json({ message: "Breaking news not found" });
+      }
+
+      res.json(updatedBreaking);
+    } catch (error) {
+      console.error("Update breaking news error:", error);
+      res.status(500).json({ message: "Failed to update breaking news" });
+    }
+  });
+
+  app.delete('/api/admin/breaking-news/:id', isAdmin, async (req, res) => {
+    try {
+      const breakingId = parseInt(req.params.id);
+
+      const [deletedBreaking] = await db.delete(breakingNews)
+        .where(eq(breakingNews.id, breakingId))
+        .returning();
+
+      if (!deletedBreaking) {
+        return res.status(404).json({ message: "Breaking news not found" });
+      }
+
+      res.json({ message: "Breaking news deleted successfully" });
+    } catch (error) {
+      console.error("Delete breaking news error:", error);
+      res.status(500).json({ message: "Failed to delete breaking news" });
     }
   });
 }

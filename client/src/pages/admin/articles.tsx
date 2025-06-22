@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,7 +27,8 @@ import {
   Hash,
   Image,
   Globe,
-  FileText
+  FileText,
+  ArrowLeft
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -50,41 +52,71 @@ interface Article {
 
 interface Category {
   id: number;
-  name: string;
-  nameHindi: string;
-  slug: string;
-  icon: string;
-  color: string;
-  isActive: boolean | null;
+  title: string;
+  titleHindi: string;
 }
 
-const articleSchema = z.object({
-  title: z.string().min(1, "English title is required"),
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
   titleHindi: z.string().min(1, "Hindi title is required"),
-  content: z.string().min(1, "English content is required"),
+  content: z.string().min(1, "Content is required"),
   contentHindi: z.string().min(1, "Hindi content is required"),
-  excerpt: z.string().min(1, "English excerpt is required"),
+  excerpt: z.string().min(1, "Excerpt is required"),
   excerptHindi: z.string().min(1, "Hindi excerpt is required"),
-  categoryId: z.number().min(1, "Category is required"),
+  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  categoryId: z.string().min(1, "Category is required"),
   authorName: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  isBreaking: z.boolean().optional(),
-  isTrending: z.boolean().optional(),
+  isBreaking: z.boolean().default(false),
+  isTrending: z.boolean().default(false),
 });
 
-type ArticleFormData = z.infer<typeof articleSchema>;
-
 export default function AdminArticles() {
-  const { user, isAuthenticated } = useAdminAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [, setLocation] = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<ArticleFormData>({
-    resolver: zodResolver(articleSchema),
+  // Check admin auth
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/admin/me');
+        if (!response.ok) {
+          setLocation('/admin/login');
+        }
+      } catch (error) {
+        setLocation('/admin/login');
+      }
+    };
+    checkAuth();
+  }, [setLocation]);
+
+  // Fetch articles
+  const { data: articles = [], isLoading: articlesLoading } = useQuery({
+    queryKey: ['/api/articles'],
+    queryFn: async () => {
+      const response = await fetch('/api/articles?limit=100');
+      if (!response.ok) throw new Error('Failed to fetch articles');
+      return response.json();
+    }
+  });
+
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ['/api/categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/categories');
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      return response.json();
+    }
+  });
+
+  // Form setup
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       titleHindi: "",
@@ -92,31 +124,28 @@ export default function AdminArticles() {
       contentHindi: "",
       excerpt: "",
       excerptHindi: "",
-      categoryId: 0,
-      authorName: "",
       imageUrl: "",
+      categoryId: "",
+      authorName: "",
       isBreaking: false,
       isTrending: false,
     },
   });
 
-  const { data: articles, isLoading: articlesLoading } = useQuery<Article[]>({
-    queryKey: ["/api/admin/articles"],
-    enabled: isAuthenticated,
-  });
-
-  const { data: categories } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
-    enabled: isAuthenticated,
-  });
-
-  const createArticleMutation = useMutation({
-    mutationFn: async (data: ArticleFormData) => {
-      return await apiRequest("/api/admin/articles", "POST", data);
+  // Create article mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof formSchema>) => {
+      const payload = {
+        ...data,
+        categoryId: parseInt(data.categoryId),
+        imageUrl: data.imageUrl || null,
+        authorName: data.authorName || null,
+      };
+      return await apiRequest("/api/admin/articles", "POST", payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
-      setIsCreateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/articles'] });
+      setIsDialogOpen(false);
       form.reset();
       toast({
         title: "Success",
@@ -126,18 +155,26 @@ export default function AdminArticles() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create article",
+        description: "Failed to create article",
         variant: "destructive",
       });
     },
   });
 
-  const updateArticleMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: ArticleFormData }) => {
-      return await apiRequest(`/api/admin/articles/${id}`, "PUT", data);
+  // Update article mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof formSchema> & { id: number }) => {
+      const payload = {
+        ...data,
+        categoryId: parseInt(data.categoryId),
+        imageUrl: data.imageUrl || null,
+        authorName: data.authorName || null,
+      };
+      return await apiRequest(`/api/admin/articles/${data.id}`, "PUT", payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/articles'] });
+      setIsDialogOpen(false);
       setEditingArticle(null);
       form.reset();
       toast({
@@ -148,22 +185,19 @@ export default function AdminArticles() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to update article",
+        description: "Failed to update article",
         variant: "destructive",
       });
     },
   });
 
-  const deleteArticleMutation = useMutation({
+  // Delete article mutation
+  const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/articles/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete article");
-      return response.json();
+      return await apiRequest(`/api/admin/articles/${id}`, "DELETE");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/articles'] });
       toast({
         title: "Success",
         description: "Article deleted successfully",
@@ -172,23 +206,21 @@ export default function AdminArticles() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete article",
+        description: "Failed to delete article",
         variant: "destructive",
       });
     },
   });
 
-  const handleCreateArticle = (data: ArticleFormData) => {
-    createArticleMutation.mutate(data);
-  };
-
-  const handleUpdateArticle = (data: ArticleFormData) => {
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
     if (editingArticle) {
-      updateArticleMutation.mutate({ id: editingArticle.id, data });
+      updateMutation.mutate({ ...data, id: editingArticle.id });
+    } else {
+      createMutation.mutate(data);
     }
   };
 
-  const handleEditArticle = (article: Article) => {
+  const handleEdit = (article: Article) => {
     setEditingArticle(article);
     form.reset({
       title: article.title,
@@ -197,382 +229,369 @@ export default function AdminArticles() {
       contentHindi: article.contentHindi,
       excerpt: article.excerpt,
       excerptHindi: article.excerptHindi,
-      categoryId: article.categoryId || 0,
-      authorName: article.authorName || "",
       imageUrl: article.imageUrl || "",
+      categoryId: article.categoryId?.toString() || "",
+      authorName: article.authorName || "",
       isBreaking: article.isBreaking || false,
       isTrending: article.isTrending || false,
     });
+    setIsDialogOpen(true);
   };
 
-  const handleDeleteArticle = (id: number) => {
+  const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this article?")) {
-      deleteArticleMutation.mutate(id);
+      deleteMutation.mutate(id);
     }
   };
 
-  const filteredArticles = articles?.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         article.titleHindi.includes(searchQuery);
-    const matchesCategory = selectedCategory === "all" || article.categoryId?.toString() === selectedCategory;
+  const filteredArticles = articles.filter((article: Article) => {
+    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         article.titleHindi.includes(searchTerm);
+    const matchesCategory = !selectedCategory || selectedCategory === "all" || article.categoryId?.toString() === selectedCategory;
     return matchesSearch && matchesCategory;
-  }) || [];
+  });
 
   const getCategoryName = (categoryId: number | null) => {
-    const category = categories?.find(c => c.id === categoryId);
-    return category ? category.nameHindi : "No Category";
+    if (!categoryId) return "No Category";
+    const category = categories.find((cat: Category) => cat.id === categoryId);
+    return category ? category.title : "Unknown";
   };
 
-  if (!isAuthenticated) {
-    window.location.href = "/admin/login";
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Article Management</h1>
-            <p className="text-gray-600 mt-2">Create, edit and manage news articles</p>
-          </div>
-          <Dialog open={isCreateDialogOpen || !!editingArticle} onOpenChange={(open) => {
-            if (!open) {
-              setIsCreateDialogOpen(false);
+    <div className="container mx-auto p-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setLocation('/admin')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+        <h1 className="text-3xl font-bold">Article Management</h1>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex gap-4 mb-6">
+        <div className="flex-1">
+          <Input
+            placeholder="Search articles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filter by category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((category: Category) => (
+              <SelectItem key={category.id} value={category.id.toString()}>
+                {category.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => {
               setEditingArticle(null);
               form.reset();
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Article
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingArticle ? "Edit Article" : "Create New Article"}</DialogTitle>
-                <DialogDescription>
-                  {editingArticle ? "Update the article details below" : "Fill in the details to create a new article"}
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(editingArticle ? handleUpdateArticle : handleCreateArticle)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>English Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter English title" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="titleHindi"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Hindi Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="हिंदी शीर्षक दर्ज करें" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="excerpt"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>English Excerpt</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Enter English excerpt" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="excerptHindi"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Hindi Excerpt</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="हिंदी सारांश दर्ज करें" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="content"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>English Content</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Enter English content" rows={6} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="contentHindi"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Hindi Content</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="हिंदी सामग्री दर्ज करें" rows={6} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="categoryId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories?.map((category) => (
-                                <SelectItem key={category.id} value={category.id.toString()}>
-                                  {category.nameHindi}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="imageUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Image URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://example.com/image.jpg" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="authorName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Author Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Reporter/Author name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="isBreaking"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <input
-                                type="checkbox"
-                                checked={field.value}
-                                onChange={field.onChange}
-                                className="w-4 h-4"
-                              />
-                            </FormControl>
-                            <FormLabel>Breaking News</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="isTrending"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <input
-                                type="checkbox"
-                                checked={field.value}
-                                onChange={field.onChange}
-                                className="w-4 h-4"
-                              />
-                            </FormControl>
-                            <FormLabel>Trending</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-4">
-                    <Button type="button" variant="outline" onClick={() => {
-                      setIsCreateDialogOpen(false);
-                      setEditingArticle(null);
-                      form.reset();
-                    }}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={createArticleMutation.isPending || updateArticleMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {createArticleMutation.isPending || updateArticleMutation.isPending ? 
-                        "Saving..." : 
-                        (editingArticle ? "Update Article" : "Create Article")
-                      }
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search articles..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Article
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingArticle ? "Edit Article" : "Create New Article"}
+              </DialogTitle>
+              <DialogDescription>
+                Fill in the article details in both English and Hindi
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title (English)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter English title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="titleHindi"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title (Hindi)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="हिंदी शीर्षक दर्ज करें" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-              </div>
-              <div className="w-full md:w-48">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.nameHindi}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Articles List */}
-        {articlesLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {filteredArticles.map((article) => (
-              <Card key={article.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{getCategoryName(article.categoryId)}</Badge>
-                        {article.isBreaking && (
-                          <Badge className="bg-red-100 text-red-800">Breaking</Badge>
-                        )}
-                        {article.isTrending && (
-                          <Badge className="bg-green-100 text-green-800">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            Trending
-                          </Badge>
-                        )}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{article.title}</h3>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">{article.titleHindi}</h4>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
-                      <div className="flex items-center text-xs text-gray-500 space-x-4">
-                        <div className="flex items-center">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : "Draft"}
-                        </div>
-                        {article.authorName && (
-                          <div className="flex items-center">
-                            <User className="w-3 h-3 mr-1" />
-                            {article.authorName}
-                          </div>
-                        )}
-                        {article.imageUrl && (
-                          <div className="flex items-center">
-                            <Image className="w-3 h-3 mr-1" />
-                            Image
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEditArticle(article)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteArticle(article.id)}
-                        disabled={deleteArticleMutation.isPending}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="excerpt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Excerpt (English)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Enter English excerpt" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="excerptHindi"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Excerpt (Hindi)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="हिंदी सारांश दर्ज करें" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Content (English)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter English content" 
+                            className="min-h-32"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="contentHindi"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Content (Hindi)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="हिंदी सामग्री दर्ज करें"
+                            className="min-h-32"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category: Category) => (
+                              <SelectItem 
+                                key={category.id} 
+                                value={category.id.toString()}
+                              >
+                                {category.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="authorName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Author Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter author name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter image URL" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex gap-6">
+                  <FormField
+                    control={form.control}
+                    name="isBreaking"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Breaking News</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="isTrending"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Trending</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    type="submit" 
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {editingArticle ? "Update Article" : "Create Article"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Articles Grid */}
+      {articlesLoading ? (
+        <div className="text-center py-8">Loading articles...</div>
+      ) : (
+        <div className="grid gap-4">
+          {filteredArticles.map((article: Article) => (
+            <Card key={article.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{article.title}</CardTitle>
+                    <CardDescription className="text-sm text-gray-600 mt-1">
+                      {article.titleHindi}
+                    </CardDescription>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline">
+                        {getCategoryName(article.categoryId)}
+                      </Badge>
+                      {article.isBreaking && (
+                        <Badge variant="destructive">Breaking</Badge>
+                      )}
+                      {article.isTrending && (
+                        <Badge variant="secondary">Trending</Badge>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-            {filteredArticles.length === 0 && (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
-                  <p className="text-gray-500">Get started by creating your first article.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-      </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(article)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(article.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 line-clamp-2">{article.excerpt}</p>
+                <div className="flex justify-between items-center mt-4 text-xs text-gray-500">
+                  <span>By: {article.authorName || "Unknown"}</span>
+                  <span>
+                    {article.createdAt 
+                      ? new Date(article.createdAt).toLocaleDateString()
+                      : "No date"
+                    }
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          
+          {filteredArticles.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No articles found</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

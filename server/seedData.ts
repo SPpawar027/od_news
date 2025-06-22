@@ -5,19 +5,19 @@ export async function seedDatabase() {
   try {
     // Seed categories
     const categoryData = [
-      { id: 1, name: "Top News", nameHindi: "टॉप न्यूज़", slug: "top-news", icon: "star", color: "#ef4444", isActive: true },
-      { id: 2, name: "Local", nameHindi: "स्थानीय", slug: "local", icon: "map-pin", color: "#3b82f6", isActive: true },
-      { id: 3, name: "National", nameHindi: "राष्ट्रीय", slug: "national", icon: "flag", color: "#f59e0b", isActive: true },
-      { id: 4, name: "Cricket", nameHindi: "क्रिकेट", slug: "cricket", icon: "ball", color: "#10b981", isActive: true },
-      { id: 5, name: "Business", nameHindi: "व्यापार", slug: "business", icon: "briefcase", color: "#8b5cf6", isActive: true },
-      { id: 6, name: "Originals", nameHindi: "ओरिजिनल्स", slug: "originals", icon: "sparkles", color: "#f43f5e", isActive: true },
-      { id: 7, name: "International", nameHindi: "अंतर्जातीय", slug: "international", icon: "globe", color: "#06b6d4", isActive: true },
-      { id: 8, name: "Tech & Science", nameHindi: "तकनीक व विज्ञान", slug: "tech-science", icon: "cpu", color: "#84cc16", isActive: true },
-      { id: 9, name: "Entertainment", nameHindi: "मनोरंजन", slug: "entertainment", icon: "music", color: "#ec4899", isActive: true },
-      { id: 10, name: "Lifestyle", nameHindi: "जीवनशैली", slug: "lifestyle", icon: "heart", color: "#f97316", isActive: true },
-      { id: 11, name: "Sports", nameHindi: "खेल", slug: "sports", icon: "trophy", color: "#22c55e", isActive: true },
-      { id: 12, name: "Utility", nameHindi: "उपयोगिता", slug: "utility", icon: "tool", color: "#64748b", isActive: true },
-      { id: 13, name: "Career", nameHindi: "करियर", slug: "career", icon: "graduation-cap", color: "#a855f7", isActive: true },
+      { id: 1, title: "Top News", titleHindi: "टॉप न्यूज़", slug: "top-news", icon: "star", color: "#ef4444" },
+      { id: 2, title: "Local", titleHindi: "स्थानीय", slug: "local", icon: "map-pin", color: "#3b82f6" },
+      { id: 3, title: "National", titleHindi: "राष्ट्रीय", slug: "national", icon: "flag", color: "#f59e0b" },
+      { id: 4, title: "Cricket", titleHindi: "क्रिकेट", slug: "cricket", icon: "ball", color: "#10b981" },
+      { id: 5, title: "Business", titleHindi: "व्यापार", slug: "business", icon: "briefcase", color: "#8b5cf6" },
+      { id: 6, title: "Originals", titleHindi: "ओरिजिनल्स", slug: "originals", icon: "sparkles", color: "#f43f5e" },
+      { id: 7, title: "International", titleHindi: "अंतर्जातीय", slug: "international", icon: "globe", color: "#06b6d4" },
+      { id: 8, title: "Tech & Science", titleHindi: "तकनीक व विज्ञान", slug: "tech-science", icon: "cpu", color: "#84cc16" },
+      { id: 9, title: "Entertainment", titleHindi: "मनोरंजन", slug: "entertainment", icon: "music", color: "#ec4899" },
+      { id: 10, title: "Lifestyle", titleHindi: "जीवनशैली", slug: "lifestyle", icon: "heart", color: "#f97316" },
+      { id: 11, title: "Sports", titleHindi: "खेल", slug: "sports", icon: "trophy", color: "#22c55e" },
+      { id: 12, title: "Utility", titleHindi: "उपयोगिता", slug: "utility", icon: "tool", color: "#64748b" },
+      { id: 13, title: "Career", titleHindi: "करियर", slug: "career", icon: "graduation-cap", color: "#a855f7" },
     ];
 
     await db.insert(categories).values(categoryData).onConflictDoNothing();
