@@ -1,0 +1,63 @@
+Build a fully functional and visually attractive Admin Panel for my news platform **OD News**.
+
+🔹 Tech Stack:
+- Frontend: React + Tailwind CSS + Headless UI  
+- Backend: Node.js (Express) + MongoDB  
+- Auth: JWT + bcrypt
+
+🔹 Core Features & Modules:
+
+1. 📑 **Content Management System (CMS)**
+   - Rich text editor for news articles (title, tags, body, categories, status: draft/published)
+   - Save drafts, edit, update, schedule publish date
+   - Article table with filters (by category, status, date) and search
+   - Slug auto-generation and thumbnail upload
+
+2. 📺 **Live TV Management**
+   - Add/Edit/Delete live streams
+   - Stream fields: Name, Type (M3U8/YouTube/Custom), URL, Status toggle
+   - Real-time preview using hls.js for M3U8 links
+
+3. 📰 **RSS Feed Management**
+   - Add/Edit/Delete RSS sources
+   - Auto-fetch every 30 minutes
+   - List fetched articles with preview & “Import to CMS” option
+
+4. 🎥 **Video Management – Entertainment Section**
+   - Upload vertical videos (9:16), manage metadata: title, tags, publish date
+   - Upload subtitles (VTT format)
+   - Auto-generate and display thumbnails
+   - Video visibility controls (Public/Private)
+
+5. 👤 **User Roles & Permissions**
+   - **Manager**: Full access, including user/role control
+   - **Editor**: Create/Edit content, no delete or user control
+   - **Limited Editor**: Like Editor but no revenue access
+   - **Subtitle Editor**: Only manage subtitles in videos
+   - **Viewer**: Read-only access
+
+🔹 Visual & UX Design:
+- Beautiful, clean **white + red** branding (match OD News theme)
+- Left sidebar with animated icons and section highlights
+- Top bar with user avatar, name, role, and dropdown
+- Fully responsive layout for desktop/tablet/mobile
+- Modern UI: rounded cards, soft shadows, smooth transitions
+- Built-in **Light/Dark theme toggle**
+- Toast notifications for all actions (success/error)
+- Table rows, buttons, toggles — **all must be fully clickable and responsive**
+
+🔹 Security & Auth:
+- JWT token auth with route protection
+- Bcrypt password hashing
+- Role-based access control middleware
+- Seed user:  
+  • Email: `admin@odnews.com`  
+  • Password: `Admin@123`
+
+🔹 Project Structure & Setup:
+- Organized monorepo: `/client` (React) and `/server` (Node)
+- Include `.env.example`, `README.md`, and seeder script
+- Fully deployable in Replit with working preview
+
+✅ Final Output:
+Return a **working and attractive OD News Admin Panel** that includes all the above modules, user roles, responsive design, and a beautiful UI/UX with full functionality.
