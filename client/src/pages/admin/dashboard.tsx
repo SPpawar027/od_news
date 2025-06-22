@@ -58,26 +58,29 @@ export default function AdminDashboard() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'MANAGER': return 'bg-red-100 text-red-800';
-      case 'EDITOR': return 'bg-blue-100 text-blue-800';
-      case 'LIMITED_EDITOR': return 'bg-yellow-100 text-yellow-800';
-      case 'SUBTITLE_EDITOR': return 'bg-green-100 text-green-800';
-      case 'VIEWER': return 'bg-gray-100 text-gray-800';
+      case 'admin': return 'bg-purple-100 text-purple-800';
+      case 'manager': return 'bg-red-100 text-red-800';
+      case 'editor': return 'bg-blue-100 text-blue-800';
+      case 'limited_editor': return 'bg-yellow-100 text-yellow-800';
+      case 'subtitle_editor': return 'bg-green-100 text-green-800';
+      case 'viewer': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPermissions = (role: string) => {
     switch (role) {
-      case 'MANAGER': 
+      case 'admin': 
+        return ['Super Admin', 'All Features', 'User Management', 'Revenue Data', 'System Settings'];
+      case 'manager': 
         return ['Full Access', 'User Management', 'Revenue Data', 'All Content'];
-      case 'EDITOR': 
+      case 'editor': 
         return ['Content Management', 'Live TV', 'RSS Feeds', 'Videos', 'Revenue Data'];
-      case 'LIMITED_EDITOR': 
+      case 'limited_editor': 
         return ['Content Management', 'Videos', 'Basic Features'];
-      case 'SUBTITLE_EDITOR': 
+      case 'subtitle_editor': 
         return ['Subtitle Management', 'Video Access'];
-      case 'VIEWER': 
+      case 'viewer': 
         return ['View Only', 'Reports'];
       default: 
         return ['Limited Access'];

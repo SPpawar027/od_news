@@ -108,7 +108,7 @@ export async function setupAdminRoutes(app: Express) {
   });
 
   // Article Management
-  app.get('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.get('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const articlesList = await db
         .select()
@@ -122,7 +122,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.post('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const validatedData = insertArticleSchema.parse(req.body);
       
@@ -142,7 +142,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.put('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.put('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertArticleSchema.parse(req.body);
@@ -164,7 +164,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.delete('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.delete('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -185,7 +185,7 @@ export async function setupAdminRoutes(app: Express) {
   });
 
   // Breaking News Management
-  app.get('/api/admin/breaking-news', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.get('/api/admin/breaking-news', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const breakingNewsList = await db
         .select()
@@ -199,7 +199,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/breaking-news', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.post('/api/admin/breaking-news', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const validatedData = insertBreakingNewsSchema.parse(req.body);
       
@@ -218,7 +218,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.put('/api/admin/breaking-news/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.put('/api/admin/breaking-news/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertBreakingNewsSchema.parse(req.body);
@@ -240,7 +240,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.delete('/api/admin/breaking-news/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.delete('/api/admin/breaking-news/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -261,7 +261,7 @@ export async function setupAdminRoutes(app: Express) {
   });
 
   // Videos Management
-  app.get('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR, UserRole.SUBTITLE_EDITOR]), async (req, res) => {
+  app.get('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR, UserRole.SUBTITLE_EDITOR]), async (req, res) => {
     try {
       const videosList = await db
         .select()
@@ -275,7 +275,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.post('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const validatedData = insertVideoSchema.parse(req.body);
       
@@ -294,7 +294,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.put('/api/admin/videos/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.put('/api/admin/videos/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertVideoSchema.parse(req.body);
@@ -316,7 +316,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.delete('/api/admin/videos/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.delete('/api/admin/videos/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -337,7 +337,7 @@ export async function setupAdminRoutes(app: Express) {
   });
 
   // Live TV Management
-  app.get('/api/admin/live-tv', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.get('/api/admin/live-tv', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const liveTvChannels = await db
         .select()
@@ -351,7 +351,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/live-tv', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.post('/api/admin/live-tv', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const validatedData = insertLiveTvSchema.parse(req.body);
       
@@ -370,7 +370,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.put('/api/admin/live-tv/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.put('/api/admin/live-tv/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertLiveTvSchema.parse(req.body);
@@ -392,7 +392,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.delete('/api/admin/live-tv/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.delete('/api/admin/live-tv/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -413,7 +413,7 @@ export async function setupAdminRoutes(app: Express) {
   });
 
   // RSS Feeds Management
-  app.get('/api/admin/rss-feeds', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.get('/api/admin/rss-feeds', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const rssFeedsList = await db
         .select()
@@ -427,7 +427,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/rss-feeds', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.post('/api/admin/rss-feeds', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const validatedData = insertRssFeedSchema.parse(req.body);
       
@@ -446,7 +446,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.put('/api/admin/rss-feeds/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.put('/api/admin/rss-feeds/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertRssFeedSchema.parse(req.body);
@@ -468,7 +468,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.delete('/api/admin/rss-feeds/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.delete('/api/admin/rss-feeds/:id', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -488,7 +488,7 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/rss-feeds/:id/refresh', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.post('/api/admin/rss-feeds/:id/refresh', isAdminAuthenticated, hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       

@@ -212,6 +212,7 @@ export type InsertSubtitle = z.infer<typeof insertSubtitleSchema>;
 
 // User role enum for type safety
 export const UserRole = {
+  ADMIN: 'admin',
   MANAGER: 'manager',
   EDITOR: 'editor',
   LIMITED_EDITOR: 'limited_editor',
