@@ -14,10 +14,11 @@ export interface LoginCredentials {
 }
 
 export function useAdminAuth() {
-  const { data: user, isLoading } = useQuery<AdminUser>({
+  const { data: user, isLoading, error } = useQuery<AdminUser>({
     queryKey: ["/api/admin/me"],
     retry: false,
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const loginMutation = useMutation({

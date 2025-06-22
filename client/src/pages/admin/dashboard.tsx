@@ -28,13 +28,22 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const { user, logout, isLoggingOut } = useAdminAuth();
+  const { user, isLoading, isAuthenticated, logout, isLoggingOut } = useAdminAuth();
   
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/dashboard-stats"],
+    enabled: isAuthenticated,
   });
 
-  if (!user) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
     window.location.href = "/admin/login";
     return null;
   }

@@ -77,6 +77,28 @@ export async function setupAdminRoutes(app: Express) {
     });
   });
 
+  // Dashboard stats endpoint
+  app.get('/api/admin/dashboard-stats', isAdminAuthenticated, async (req, res) => {
+    try {
+      const [articlesResult] = await db.select({ count: sql`count(*)` }).from(articles);
+      const [categoriesResult] = await db.select({ count: sql`count(*)` }).from(categories);
+      const [videosResult] = await db.select({ count: sql`count(*)` }).from(videos);
+      const [usersResult] = await db.select({ count: sql`count(*)` }).from(adminUsers);
+      
+      const stats = {
+        articles: Number(articlesResult.count) || 0,
+        videos: Number(videosResult.count) || 0,
+        categories: Number(categoriesResult.count) || 0,
+        users: Number(usersResult.count) || 0
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Dashboard stats error:', error);
+      res.status(500).json({ message: 'Failed to fetch dashboard stats' });
+    }
+  });
+
   // User Management (Manager only)
   app.get('/api/admin/users', isAdminAuthenticated, hasPermission([UserRole.MANAGER]), async (req, res) => {
     try {
