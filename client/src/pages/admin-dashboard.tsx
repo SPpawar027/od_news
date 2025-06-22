@@ -154,22 +154,6 @@ export default function AdminDashboard() {
     localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
   };
 
-  if (!isLoading && !isAuthenticated) {
-    window.location.href = "/admin/login";
-    return null;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading admin panel...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Dashboard Statistics
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/v1/admin/stats"],
@@ -211,6 +195,22 @@ export default function AdminDashboard() {
     queryKey: ["/api/v1/admin/search", searchQuery],
     enabled: searchQuery.length > 2,
   });
+
+  if (!isLoading && !isAuthenticated) {
+    window.location.href = "/admin/login";
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   const getRoleColor = (role: string) => {
     const colors = {
