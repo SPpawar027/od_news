@@ -1,0 +1,65 @@
+Admin Login Page (Custom Layout)
+- Create a split-screen admin login UI:
+  • Left panel: Background image of a newsroom/control room with a blurred glass overlay and Justice Wave News logo
+  • Right panel: Clean login form with fields – Email/Username, Password, Remember Me
+  • Red login button with hover glow effect
+  • Footer: “© 2025 Justice Wave News | Powered by Replit”
+  • Real-time clock and ticker banner (optional)
+  • Mobile responsive and dark/light mode toggle
+  • Seed one default Manager user (email: admin@jwt.com, pass: Admin@123)
+
+🔹 Admin Panel Modules
+
+1. **AI-Enhanced Content Management System (CMS)**
+   - Rich-text editor with AI buttons:
+     • Auto-generate hashtags
+     • Improve headline tone
+     • Summarize news
+   - Draft saving, version control, scheduled publishing
+
+2. **Live TV Management**
+   - Form for adding/editing/deleting streams
+   - Fields: Stream Name, Type (M3U8, YouTube, Custom), URL, Status toggle
+   - Real-time preview using hls.js
+
+3. **RSS Feed Management**
+   - Add/edit/delete RSS sources
+   - Auto-fetch feeds every 30 mins
+   - Show feed items with an “Import” button to bring items into the CMS
+
+4. **Entertainment Video Management**
+   - Form for vertical video uploads
+   - Fields: Title, Tags, Duration, Upload Date
+   - Subtitle (VTT) upload and auto-thumbnail generator
+   - Preview player for videos
+
+5. **User Role System (Five Roles)**
+   - Manager: Full access to all modules + user & role management
+   - Editor: Create/Edit content only, no deletion or access to roles
+   - Limited Editor: Same as Editor, but no access to revenue data
+   - Subtitle Editor: Can only manage subtitles in video module
+   - Viewer: View-only access everywhere
+
+🔹 Admin Panel UI Requirements
+- Sidebar navigation with icon-based menu
+- Top navbar with user role display and profile menu
+- Theme toggle (dark/light)
+- Search bar for global search across articles/videos/users
+- Route protection by role using JWT tokens
+- Clean responsive layout (mobile/tablet/desktop)
+- Every button, form, table, and link must be functional and clickable
+
+🔹 Dev Instructions
+- Project structure: `/client` for React front-end, `/server` for Node back-end
+- Provide seed script to create initial Manager login
+- Include `.env.example` and full README with setup steps
+- All API routes prefixed with `/api/v1`
+- Use Mongoose for all models (User, Article, Stream, Video, RSS Source)
+
+🔹 Testing & Quality
+- Use ESLint & Prettier configs
+- Test key API endpoints using Vitest & Supertest
+- Fully responsive
+- Comment functions and structure code cleanly
+
+Return working project in Replit with preview link and working login.
