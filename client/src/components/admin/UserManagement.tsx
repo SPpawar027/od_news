@@ -1,615 +1,374 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Users,
-  UserCheck,
-  UserX,
-  Shield,
-  Settings,
-  Key,
-  Crown,
-  User,
-  AlertTriangle
-} from "lucide-react";
+import { Plus, Search, Edit, Trash2, UserCheck, UserX, Shield } from "lucide-react";
 import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import type { AdminUser, InsertAdminUser } from "@shared/schema";
-
-const userSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Valid email is required"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
-  role: z.enum(["manager", "editor", "limited_editor"]),
-  isActive: z.boolean().default(true),
-});
-
-type UserFormData = z.infer<typeof userSchema>;
+import type { AdminUser } from "@/../../shared/schema";
 
 export default function UserManagement() {
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
-  const [showPermissions, setShowPermissions] = useState(false);
-  const { toast } = useToast();
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | undefined>();
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
-  const form = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      password: "",
-      role: "limited_editor",
-      isActive: true,
-    },
-  });
-
-  const { data: users = [], isLoading } = useQuery<AdminUser[]>({
+  const { data: users = [], isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/users", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch users");
-      return response.json();
-    },
   });
 
-  const createUserMutation = useMutation({
-    mutationFn: async (data: UserFormData) => {
-      const response = await fetch("/api/admin/users", {
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("/api/admin/users", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create user");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      setShowAddDialog(false);
-      form.reset();
-      toast({
-        title: "User created successfully",
-      });
+      setShowDialog(false);
+      setEditingUser(undefined);
     },
   });
 
-  const updateUserMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<UserFormData> }) => {
-      const payload = { ...data };
-      if (!payload.password) {
-        delete payload.password;
-      }
-
-      const response = await fetch(`/api/admin/users/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-        body: JSON.stringify(payload),
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/admin/users/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to update user");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      setEditingUser(null);
-      toast({
-        title: "User updated successfully",
-      });
+      setShowDialog(false);
+      setEditingUser(undefined);
     },
   });
 
-  const deleteUserMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/users/${id}`, {
+      return apiRequest(`/api/admin/users/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
       });
-      if (!response.ok) throw new Error("Failed to delete user");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({
-        title: "User deleted successfully",
-      });
     },
   });
 
   const toggleUserMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const response = await fetch(`/api/admin/users/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-        body: JSON.stringify({ isActive: !isActive }),
+      return apiRequest(`/api/admin/users/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ isActive }),
       });
-      if (!response.ok) throw new Error("Failed to toggle user status");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
   });
 
-  const handleEdit = (user: AdminUser) => {
-    setEditingUser(user);
-    form.reset({
-      username: user.username,
-      email: user.email,
-      password: "", // Don't populate password for editing
-      role: user.role as "manager" | "editor" | "limited_editor",
-      isActive: user.isActive,
-    });
-    setShowAddDialog(true);
-  };
+  const filteredUsers = users.filter((user: AdminUser) =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleSave = (data: UserFormData) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const data = {
+      username: formData.get("username") as string,
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      role: formData.get("role") as string,
+      isActive: formData.get("isActive") === "true",
+    };
+
     if (editingUser) {
-      updateUserMutation.mutate({ id: editingUser.id, data });
+      updateMutation.mutate({ id: editingUser.id, data });
     } else {
-      createUserMutation.mutate(data);
+      createMutation.mutate(data);
     }
   };
 
-  const getRoleBadge = (role: string) => {
-    const roleConfig = {
-      "manager": { color: "bg-red-500", icon: Crown, label: "Manager" },
-      "editor": { color: "bg-blue-500", icon: Edit, label: "Editor" },
-      "limited_editor": { color: "bg-green-500", icon: User, label: "Limited Editor" }
-    };
-    
-    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.limited_editor;
-    const IconComponent = config.icon;
-    
-    return (
-      <Badge className={`${config.color} text-white flex items-center gap-1`}>
-        <IconComponent className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    );
+  const handleEdit = (user: AdminUser) => {
+    setEditingUser(user);
+    setShowDialog(true);
   };
 
-  const getPermissions = (role: string) => {
-    const permissions = {
-      "manager": [
-        "Create, edit, delete articles",
-        "Manage live streams",
-        "Manage videos", 
-        "Manage RSS feeds",
-        "Manage users",
-        "System settings"
-      ],
-      "editor": [
-        "Create, edit, delete articles",
-        "Manage live streams",
-        "Manage videos",
-        "Manage RSS feeds"
-      ],
-      "limited_editor": [
-        "Create, edit own articles",
-        "View live streams",
-        "View videos"
-      ]
-    };
-    
-    return permissions[role as keyof typeof permissions] || permissions.limited_editor;
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this user?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
-  const stats = {
-    total: users.length,
-    active: users.filter(u => u.isActive).length,
-    managers: users.filter(u => u.role === 'manager').length,
-    editors: users.filter(u => u.role === 'editor').length,
-    limitedEditors: users.filter(u => u.role === 'limited_editor').length,
+  const handleToggleUser = (id: number, currentStatus: boolean | null) => {
+    toggleUserMutation.mutate({ id, isActive: !currentStatus });
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case "manager":
+        return "bg-red-100 text-red-800";
+      case "editor":
+        return "bg-blue-100 text-blue-800";
+      case "limited_editor":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getRolePermissions = (role: string) => {
+    switch (role) {
+      case "manager":
+        return "Full access to all features";
+      case "editor":
+        return "Can create and edit articles, manage media";
+      case "limited_editor":
+        return "Can create articles but requires approval";
+      default:
+        return "No permissions defined";
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
-                <p className="text-xl font-bold">{stats.total}</p>
+      {/* Header Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogTrigger asChild>
+            <Button className="bg-red-600 hover:bg-red-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add User
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingUser ? "Edit User" : "Add New User"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    name="username"
+                    defaultValue={editingUser?.username}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={editingUser?.email}
+                    required
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-green-600" />
+              
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-                <p className="text-xl font-bold">{stats.active}</p>
+                <Label htmlFor="password">
+                  {editingUser ? "New Password (leave blank to keep current)" : "Password"}
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required={!editingUser}
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Crown className="w-4 h-4 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Managers</p>
-                <p className="text-xl font-bold">{stats.managers}</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="role">Role</Label>
+                  <Select name="role" defaultValue={editingUser?.role || "limited_editor"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="limited_editor">Limited Editor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="isActive">Status</Label>
+                  <Select name="isActive" defaultValue={editingUser?.isActive ? "true" : "false"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Edit className="w-4 h-4 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Editors</p>
-                <p className="text-xl font-bold">{stats.editors}</p>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDialog(false);
+                    setEditingUser(undefined);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {editingUser ? "Update" : "Create"} User
+                </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Limited</p>
-                <p className="text-xl font-bold">{stats.limitedEditors}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Role Permissions Info */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Role Permissions</CardTitle>
-            <Button
-              variant="outline"
-              onClick={() => setShowPermissions(!showPermissions)}
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              {showPermissions ? "Hide" : "Show"} Permissions
-            </Button>
-          </div>
-        </CardHeader>
-        {showPermissions && (
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-red-500" />
-                  <h3 className="font-semibold">Manager</h3>
+      {/* Users Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredUsers.map((user: AdminUser) => (
+            <Card key={user.id} className="group hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gray-100 p-2 rounded-full">
+                      <Shield className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {user.username}
+                      </CardTitle>
+                      <p className="text-sm text-gray-500">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Badge
+                      variant={user.isActive ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {user.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
                 </div>
-                <ul className="space-y-1 text-sm">
-                  {getPermissions("manager").map((permission, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                      {permission}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Edit className="w-5 h-5 text-blue-500" />
-                  <h3 className="font-semibold">Editor</h3>
-                </div>
-                <ul className="space-y-1 text-sm">
-                  {getPermissions("editor").map((permission, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
-                      {permission}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-green-500" />
-                  <h3 className="font-semibold">Limited Editor</h3>
-                </div>
-                <ul className="space-y-1 text-sm">
-                  {getPermissions("limited_editor").map((permission, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <div className="w-1 h-1 bg-green-500 rounded-full"></div>
-                      {permission}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* User Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>User Role Management</CardTitle>
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button 
-                  onClick={() => {
-                    setEditingUser(null);
-                    form.reset();
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add User
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingUser ? "Edit User" : "Add New User"}
-                  </DialogTitle>
-                </DialogHeader>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="johndoe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  <div>
+                    <Badge className={`text-xs ${getRoleColor(user.role)}`}>
+                      {user.role.replace("_", " ").toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {getRolePermissions(user.role)}
+                  </p>
+                  <div className="text-xs text-gray-400">
+                    Last login: {user.lastLogin 
+                      ? format(new Date(user.lastLogin), "MMM dd, yyyy")
+                      : "Never"
+                    }
+                  </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <Button
+                      size="sm"
+                      variant={user.isActive ? "destructive" : "default"}
+                      onClick={() => handleToggleUser(user.id, user.isActive)}
+                    >
+                      {user.isActive ? (
+                        <>
+                          <UserX className="w-3 h-3 mr-1" />
+                          Deactivate
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="w-3 h-3 mr-1" />
+                          Activate
+                        </>
                       )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="john@odnews.com" type="email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Password {editingUser ? "(leave blank to keep current)" : "*"}
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder={editingUser ? "Leave blank to keep current" : "Enter password"}
-                              type="password" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="manager">
-                                <div className="flex items-center gap-2">
-                                  <Crown className="w-4 h-4 text-red-500" />
-                                  Manager (Full Access)
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="editor">
-                                <div className="flex items-center gap-2">
-                                  <Edit className="w-4 h-4 text-blue-500" />
-                                  Editor (Content & Media)
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="limited_editor">
-                                <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4 text-green-500" />
-                                  Limited Editor (Articles Only)
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="isActive"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Active User</FormLabel>
-                            <div className="text-sm text-muted-foreground">
-                              Allow this user to access the admin panel
-                            </div>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createUserMutation.isPending || updateUserMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700"
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(user)}
                       >
-                        {editingUser ? "Update" : "Create"} User
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Login</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      Loading users...
-                    </TableCell>
-                  </TableRow>
-                ) : users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No users found. Add your first user to get started.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                            <User className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">{user.username}</h4>
-                            <p className="text-sm text-gray-500">{user.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${
-                            user.isActive ? 'bg-green-500' : 'bg-red-500'
-                          }`}></div>
-                          <span>{user.isActive ? 'Active' : 'Inactive'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {user.lastLoginAt ? (
-                          format(new Date(user.lastLoginAt), "MMM dd, yyyy")
-                        ) : (
-                          <span className="text-gray-500">Never</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(user.createdAt), "MMM dd, yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleUserMutation.mutate({
-                              id: user.id,
-                              isActive: user.isActive
-                            })}
-                          >
-                            {user.isActive ? <UserX className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(user)}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          {user.role !== 'manager' && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => deleteUserMutation.mutate(user.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {filteredUsers.length === 0 && !isLoading && (
+        <Card className="text-center py-12">
+          <CardContent>
+            <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-4">No users found</p>
+            <Button
+              onClick={() => setShowDialog(true)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add First User
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

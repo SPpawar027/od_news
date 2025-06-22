@@ -1,41 +1,16 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Save, Eye, Upload, X } from "lucide-react";
+import { ArrowLeft, Save, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Category, Article, InsertArticle } from "@shared/schema";
-
-const articleSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  titleHindi: z.string().optional(),
-  content: z.string().min(1, "Content is required"),
-  contentHindi: z.string().optional(),
-  excerpt: z.string().optional(),
-  authorName: z.string().min(1, "Author name is required"),
-  categoryId: z.number(),
-  imageUrl: z.string().optional(),
-  tags: z.string().optional(),
-  isBreaking: z.boolean().default(false),
-  isFeatured: z.boolean().default(false),
-  scheduledAt: z.date().optional(),
-});
-
-type ArticleFormData = z.infer<typeof articleSchema>;
+import type { Article, Category } from "@/../../shared/schema";
 
 interface ArticleEditorProps {
   article?: Article;
@@ -44,225 +19,239 @@ interface ArticleEditorProps {
 }
 
 export default function ArticleEditor({ article, onClose, onSave }: ArticleEditorProps) {
-  const [publishType, setPublishType] = useState<'publish' | 'draft' | 'schedule'>('draft');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [formData, setFormData] = useState({
+    title: article?.title || "",
+    titleHindi: article?.titleHindi || "",
+    content: article?.content || "",
+    contentHindi: article?.contentHindi || "",
+    excerpt: article?.excerpt || "",
+    excerptHindi: article?.excerptHindi || "",
+    imageUrl: article?.imageUrl || "",
+    authorName: article?.authorName || "",
+    categoryId: article?.categoryId || null,
+    isBreaking: article?.isBreaking || false,
+    isTrending: article?.isTrending || false,
+  });
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: categories = [] } = useQuery<Category[]>({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
   });
 
-  const form = useForm<ArticleFormData>({
-    resolver: zodResolver(articleSchema),
-    defaultValues: {
-      title: "",
-      titleHindi: "",
-      content: "",
-      contentHindi: "",
-      excerpt: "",
-      authorName: "",
-      categoryId: 1,
-      imageUrl: "",
-      tags: "",
-      isBreaking: false,
-      isFeatured: false,
-    },
-  });
-
-  useEffect(() => {
-    if (article) {
-      form.reset({
-        title: article.title,
-        titleHindi: article.titleHindi || "",
-        content: article.content,
-        contentHindi: article.contentHindi || "",
-        excerpt: article.excerpt || "",
-        authorName: article.authorName || "",
-        categoryId: article.categoryId,
-        imageUrl: article.imageUrl || "",
-        tags: article.tags?.join(", ") || "",
-        isBreaking: article.isBreaking || false,
-        isFeatured: article.isFeatured || false,
-        scheduledAt: article.scheduledAt ? new Date(article.scheduledAt) : undefined,
-      });
-      setImagePreview(article.imageUrl || "");
-    }
-  }, [article, form]);
-
-  const uploadImageMutation = useMutation({
+  const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("image", file);
-      
-      const response = await fetch("/api/admin/upload", {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      return apiRequest("/api/upload", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-        body: formData,
-      });
-      
-      if (!response.ok) throw new Error("Upload failed");
-      return response.json();
-    },
-    onSuccess: (data) => {
-      form.setValue("imageUrl", data.url);
-      setImagePreview(data.url);
-      toast({
-        title: "Image uploaded successfully",
+        body: uploadFormData,
       });
     },
   });
 
-  const saveArticleMutation = useMutation({
-    mutationFn: async (data: ArticleFormData & { publishType: string }) => {
-      const payload: Partial<InsertArticle> = {
-        title: data.title,
-        titleHindi: data.titleHindi || null,
-        content: data.content,
-        contentHindi: data.contentHindi || null,
-        excerpt: data.excerpt || null,
-        authorName: data.authorName,
-        categoryId: data.categoryId,
-        imageUrl: data.imageUrl || null,
-        tags: data.tags ? data.tags.split(",").map(tag => tag.trim()) : [],
-        isBreaking: data.isBreaking,
-        isFeatured: data.isFeatured,
-        publishedAt: data.publishType === 'publish' ? new Date() : 
-                     data.publishType === 'schedule' && data.scheduledAt ? data.scheduledAt : null,
-        scheduledAt: data.publishType === 'schedule' ? data.scheduledAt : null,
-      };
-
-      const endpoint = article ? `/api/admin/articles/${article.id}` : "/api/admin/articles";
-      const method = article ? "PATCH" : "POST";
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error("Save failed");
-      return response.json();
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (article) {
+        return apiRequest(`/api/admin/articles/${article.id}`, {
+          method: "PUT",
+          body: JSON.stringify(data),
+        });
+      } else {
+        return apiRequest("/api/admin/articles", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
       toast({
-        title: article ? "Article updated successfully" : "Article created successfully",
+        title: "Success",
+        description: `Article ${article ? "updated" : "created"} successfully`,
       });
       onSave();
-      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save article",
+        variant: "destructive",
+      });
     },
   });
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
-      uploadImageMutation.mutate(file);
+      uploadMutation.mutate(file, {
+        onSuccess: (response: any) => {
+          handleInputChange("imageUrl", response.url);
+          toast({
+            title: "Success",
+            description: "Image uploaded successfully",
+          });
+        },
+        onError: () => {
+          toast({
+            title: "Error",
+            description: "Failed to upload image",
+            variant: "destructive",
+          });
+        },
+      });
     }
   };
 
-  const handleSave = (data: ArticleFormData) => {
-    saveArticleMutation.mutate({ ...data, publishType });
+  const handleSave = () => {
+    if (!formData.title || !formData.content) {
+      toast({
+        title: "Error",
+        description: "Title and content are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    saveMutation.mutate(formData);
   };
 
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'indent': '-1'}, { 'indent': '+1' }],
-      ['link', 'image', 'video'],
-      ['blockquote', 'code-block'],
-      [{ 'align': [] }],
-      ['clean']
-    ],
+  const handlePreview = () => {
+    window.open(`/article/preview`, '_blank');
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {article ? "Edit Article" : "Create New Article"}
-            </h2>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={onClose}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-2xl font-bold">
+            {article ? "Edit Article" : "Create New Article"}
+          </h1>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handlePreview}>
+            <Eye className="w-4 h-4 mr-2" />
+            Preview
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saveMutation.isPending ? "Saving..." : "Save Article"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Article Content</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="title">Title (English)</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                    placeholder="Enter article title..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="titleHindi">Title (Hindi)</Label>
+                  <Input
+                    id="titleHindi"
+                    value={formData.titleHindi}
+                    onChange={(e) => handleInputChange("titleHindi", e.target.value)}
+                    placeholder="लेख का शीर्षक दर्ज करें..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="excerpt">Excerpt (English)</Label>
+                  <Textarea
+                    id="excerpt"
+                    value={formData.excerpt}
+                    onChange={(e) => handleInputChange("excerpt", e.target.value)}
+                    placeholder="Brief description..."
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="excerptHindi">Excerpt (Hindi)</Label>
+                  <Textarea
+                    id="excerptHindi"
+                    value={formData.excerptHindi}
+                    onChange={(e) => handleInputChange("excerptHindi", e.target.value)}
+                    placeholder="संक्षिप्त विवरण..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="content">Content (English)</Label>
+                <Textarea
+                  id="content"
+                  value={formData.content}
+                  onChange={(e) => handleInputChange("content", e.target.value)}
+                  placeholder="Write your article content here..."
+                  rows={12}
+                  className="font-mono"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="contentHindi">Content (Hindi)</Label>
+                <Textarea
+                  id="contentHindi"
+                  value={formData.contentHindi}
+                  onChange={(e) => handleInputChange("contentHindi", e.target.value)}
+                  placeholder="अपना लेख यहाँ लिखें..."
+                  rows={12}
+                  className="font-mono"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <form onSubmit={form.handleSubmit(handleSave)} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="space-y-6">
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Article Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="title">Title (English) *</Label>
-                <Input
-                  id="title"
-                  {...form.register("title")}
-                  placeholder="Enter article title..."
-                  className="mt-1"
-                />
-                {form.formState.errors.title && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="titleHindi">Title (Hindi)</Label>
-                <Input
-                  id="titleHindi"
-                  {...form.register("titleHindi")}
-                  placeholder="लेख का शीर्षक दर्ज करें..."
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="excerpt">Excerpt</Label>
-                <Input
-                  id="excerpt"
-                  {...form.register("excerpt")}
-                  placeholder="Brief summary of the article..."
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="authorName">Author Name *</Label>
-                <Input
-                  id="authorName"
-                  {...form.register("authorName")}
-                  placeholder="Author name..."
-                  className="mt-1"
-                />
-                {form.formState.errors.authorName && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.authorName.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="categoryId">Category *</Label>
-                <Select
-                  value={form.watch("categoryId")?.toString()}
-                  onValueChange={(value) => form.setValue("categoryId", parseInt(value))}
+                <Label htmlFor="category">Category</Label>
+                <Select 
+                  value={formData.categoryId?.toString() || ""} 
+                  onValueChange={(value) => handleInputChange("categoryId", parseInt(value) || null)}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {categories.map((category: Category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.title}
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -270,235 +259,86 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
               </div>
 
               <div>
-                <Label htmlFor="tags">Tags (comma separated)</Label>
+                <Label htmlFor="authorName">Author Name</Label>
                 <Input
-                  id="tags"
-                  {...form.register("tags")}
-                  placeholder="politics, breaking, india..."
-                  className="mt-1"
+                  id="authorName"
+                  value={formData.authorName || ""}
+                  onChange={(e) => handleInputChange("authorName", e.target.value)}
+                  placeholder="Author name..."
                 />
               </div>
-            </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Article Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="isBreaking">Breaking News</Label>
-                    <Switch
-                      id="isBreaking"
-                      checked={form.watch("isBreaking")}
-                      onCheckedChange={(checked) => form.setValue("isBreaking", checked)}
-                    />
-                  </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="isBreaking">Breaking News</Label>
+                  <Switch
+                    id="isBreaking"
+                    checked={formData.isBreaking || false}
+                    onCheckedChange={(checked) => handleInputChange("isBreaking", checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="isTrending">Trending Article</Label>
+                  <Switch
+                    id="isTrending"
+                    checked={formData.isTrending || false}
+                    onCheckedChange={(checked) => handleInputChange("isTrending", checked)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="isFeatured">Featured Article</Label>
-                    <Switch
-                      id="isFeatured"
-                      checked={form.watch("isFeatured")}
-                      onCheckedChange={(checked) => form.setValue("isFeatured", checked)}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Publish Type</Label>
-                    <div className="flex gap-2 mt-2">
-                      <Button
-                        type="button"
-                        variant={publishType === 'draft' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPublishType('draft')}
-                      >
-                        Save Draft
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={publishType === 'publish' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPublishType('publish')}
-                      >
-                        Publish Now
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={publishType === 'schedule' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPublishType('schedule')}
-                      >
-                        Schedule
-                      </Button>
-                    </div>
-                  </div>
-
-                  {publishType === 'schedule' && (
-                    <div>
-                      <Label>Schedule Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !form.watch("scheduledAt") && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {form.watch("scheduledAt") ? (
-                              format(form.watch("scheduledAt")!, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={form.watch("scheduledAt")}
-                            onSelect={(date) => form.setValue("scheduledAt", date)}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Featured Image</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="image-upload"
-                      />
-                      <Label htmlFor="image-upload" className="cursor-pointer">
-                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500">
-                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Click to upload image
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-
-                    {imagePreview && (
-                      <div className="relative">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-32 object-cover rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
-                          onClick={() => {
-                            setImagePreview("");
-                            form.setValue("imageUrl", "");
-                          }}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    )}
-
-                    <div>
-                      <Label htmlFor="imageUrl">Or enter image URL</Label>
-                      <Input
-                        id="imageUrl"
-                        {...form.register("imageUrl")}
-                        placeholder="https://example.com/image.jpg"
-                        className="mt-1"
-                        onChange={(e) => {
-                          form.setValue("imageUrl", e.target.value);
-                          setImagePreview(e.target.value);
-                        }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Content Editor */}
-          <div className="space-y-4">
-            <div>
-              <Label>Content (English) *</Label>
-              <div className="mt-1">
-                <ReactQuill
-                  theme="snow"
-                  value={form.watch("content")}
-                  onChange={(content) => form.setValue("content", content)}
-                  modules={modules}
-                  placeholder="Write your article content here..."
-                  style={{ height: "300px", marginBottom: "50px" }}
+          <Card>
+            <CardHeader>
+              <CardTitle>Featured Image</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl || ""}
+                  onChange={(e) => handleInputChange("imageUrl", e.target.value)}
+                  placeholder="https://example.com/image.jpg"
                 />
               </div>
-              {form.formState.errors.content && (
-                <p className="text-red-500 text-sm mt-1">{form.formState.errors.content.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label>Content (Hindi)</Label>
-              <div className="mt-1">
-                <ReactQuill
-                  theme="snow"
-                  value={form.watch("contentHindi")}
-                  onChange={(content) => form.setValue("contentHindi", content)}
-                  modules={modules}
-                  placeholder="अपना लेख यहाँ लिखें..."
-                  style={{ height: "300px", marginBottom: "50px" }}
-                />
+              
+              <div>
+                <Label htmlFor="imageUpload">Upload Image</Label>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    id="imageUpload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById("imageUpload")?.click()}
+                    disabled={uploadMutation.isPending}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploadMutation.isPending ? "Uploading..." : "Choose File"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2">
-              {form.watch("isBreaking") && (
-                <Badge className="bg-red-600 text-white">Breaking News</Badge>
+              {formData.imageUrl && (
+                <div>
+                  <Label>Preview</Label>
+                  <img
+                    src={formData.imageUrl}
+                    alt="Article preview"
+                    className="w-full h-32 object-cover rounded-md mt-2"
+                  />
+                </div>
               )}
-              {form.watch("isFeatured") && (
-                <Badge className="bg-blue-600 text-white">Featured</Badge>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="button" variant="outline">
-                <Eye className="w-4 h-4 mr-2" />
-                Preview
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={saveArticleMutation.isPending}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {publishType === 'publish' ? 'Publish' : 
-                 publishType === 'schedule' ? 'Schedule' : 'Save Draft'}
-              </Button>
-            </div>
-          </div>
-        </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

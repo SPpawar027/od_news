@@ -1,607 +1,373 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Play, 
-  Pause,
-  Radio,
-  Eye,
-  Users,
-  Tv,
-  Youtube,
-  Globe,
-  Signal,
-  SignalHigh,
-  SignalLow
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import type { LiveStream, InsertLiveStream } from "@shared/schema";
-
-const streamSchema = z.object({
-  name: z.string().min(1, "Stream name is required"),
-  nameHindi: z.string().optional(),
-  description: z.string().optional(),
-  streamUrl: z.string().url("Valid stream URL is required"),
-  thumbnailUrl: z.string().url().optional().or(z.literal("")),
-  streamType: z.enum(["m3u8", "youtube", "custom"]),
-  category: z.string().min(1, "Category is required"),
-  quality: z.enum(["480p", "720p", "1080p", "4k"]),
-  isActive: z.boolean().default(true),
-});
-
-type StreamFormData = z.infer<typeof streamSchema>;
+import { Plus, Search, Edit, Trash2, Play, Pause, Users } from "lucide-react";
+import type { LiveStream } from "@/../../shared/schema";
 
 export default function LiveStreamManagement() {
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingStream, setEditingStream] = useState<LiveStream | null>(null);
-  const { toast } = useToast();
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingStream, setEditingStream] = useState<LiveStream | undefined>();
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
-  const form = useForm<StreamFormData>({
-    resolver: zodResolver(streamSchema),
-    defaultValues: {
-      name: "",
-      nameHindi: "",
-      description: "",
-      streamUrl: "",
-      thumbnailUrl: "",
-      streamType: "m3u8",
-      category: "news",
-      quality: "720p",
-      isActive: true,
-    },
-  });
-
-  const { data: streams = [], isLoading } = useQuery<LiveStream[]>({
+  const { data: streams = [], isLoading } = useQuery({
     queryKey: ["/api/admin/live-streams"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/live-streams", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch streams");
-      return response.json();
-    },
   });
 
-  const createStreamMutation = useMutation({
-    mutationFn: async (data: StreamFormData) => {
-      const response = await fetch("/api/admin/live-streams", {
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("/api/admin/live-streams", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create stream");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/live-streams"] });
-      setShowAddDialog(false);
-      form.reset();
-      toast({
-        title: "Live stream created successfully",
-      });
+      setShowDialog(false);
+      setEditingStream(undefined);
     },
   });
 
-  const updateStreamMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<StreamFormData> }) => {
-      const response = await fetch(`/api/admin/live-streams/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/admin/live-streams/${id}`, {
+        method: "PUT",
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to update stream");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/live-streams"] });
-      setEditingStream(null);
-      toast({
-        title: "Live stream updated successfully",
-      });
+      setShowDialog(false);
+      setEditingStream(undefined);
     },
   });
 
-  const deleteStreamMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/live-streams/${id}`, {
+      return apiRequest(`/api/admin/live-streams/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
       });
-      if (!response.ok) throw new Error("Failed to delete stream");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/live-streams"] });
-      toast({
-        title: "Live stream deleted successfully",
-      });
     },
   });
 
   const toggleStreamMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const response = await fetch(`/api/admin/live-streams/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-        body: JSON.stringify({ isActive: !isActive }),
+      return apiRequest(`/api/admin/live-streams/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ isActive }),
       });
-      if (!response.ok) throw new Error("Failed to toggle stream");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/live-streams"] });
     },
   });
 
+  const filteredStreams = streams.filter((stream: LiveStream) =>
+    stream.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    stream.nameHindi.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const data = {
+      name: formData.get("name") as string,
+      nameHindi: formData.get("nameHindi") as string,
+      description: formData.get("description") as string,
+      type: formData.get("type") as string,
+      url: formData.get("url") as string,
+      thumbnailUrl: formData.get("thumbnailUrl") as string,
+      category: formData.get("category") as string,
+      isActive: formData.get("isActive") === "true",
+    };
+
+    if (editingStream) {
+      updateMutation.mutate({ id: editingStream.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
   const handleEdit = (stream: LiveStream) => {
     setEditingStream(stream);
-    form.reset({
-      name: stream.name,
-      nameHindi: stream.nameHindi || "",
-      description: stream.description || "",
-      streamUrl: stream.streamUrl,
-      thumbnailUrl: stream.thumbnailUrl || "",
-      streamType: stream.streamType as "m3u8" | "youtube" | "custom",
-      category: stream.category,
-      quality: stream.quality as "480p" | "720p" | "1080p" | "4k",
-      isActive: stream.isActive,
-    });
-    setShowAddDialog(true);
+    setShowDialog(true);
   };
 
-  const handleSave = (data: StreamFormData) => {
-    if (editingStream) {
-      updateStreamMutation.mutate({ id: editingStream.id, data });
-    } else {
-      createStreamMutation.mutate(data);
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this stream?")) {
+      deleteMutation.mutate(id);
     }
   };
 
-  const getStreamTypeIcon = (type: string) => {
-    switch (type) {
-      case "youtube":
-        return <Youtube className="w-4 h-4 text-red-600" />;
-      case "m3u8":
-        return <Radio className="w-4 h-4 text-blue-600" />;
-      default:
-        return <Globe className="w-4 h-4 text-green-600" />;
-    }
-  };
-
-  const getQualityBadge = (quality: string) => {
-    const colors = {
-      "480p": "bg-gray-500",
-      "720p": "bg-blue-500",
-      "1080p": "bg-green-500",
-      "4k": "bg-purple-500"
-    };
-    return (
-      <Badge className={`${colors[quality as keyof typeof colors]} text-white`}>
-        {quality}
-      </Badge>
-    );
-  };
-
-  const stats = {
-    total: streams.length,
-    active: streams.filter(s => s.isActive).length,
-    inactive: streams.filter(s => !s.isActive).length,
-    totalViewers: streams.reduce((sum, s) => sum + (s.viewerCount || 0), 0),
+  const handleToggleStream = (id: number, currentStatus: boolean | null) => {
+    toggleStreamMutation.mutate({ id, isActive: !currentStatus });
   };
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Tv className="w-4 h-4 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Streams</p>
-                <p className="text-xl font-bold">{stats.total}</p>
+      {/* Header Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search streams..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogTrigger asChild>
+            <Button className="bg-red-600 hover:bg-red-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Stream
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingStream ? "Edit Stream" : "Add New Stream"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Stream Name (English)</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={editingStream?.name}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nameHindi">Stream Name (Hindi)</Label>
+                  <Input
+                    id="nameHindi"
+                    name="nameHindi"
+                    defaultValue={editingStream?.nameHindi}
+                    required
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <SignalHigh className="w-4 h-4 text-green-600" />
+              
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-                <p className="text-xl font-bold">{stats.active}</p>
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  name="description"
+                  defaultValue={editingStream?.description || ""}
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <SignalLow className="w-4 h-4 text-gray-600" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="type">Stream Type</Label>
+                  <Select name="type" defaultValue={editingStream?.type || "m3u8"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="m3u8">M3U8 (HLS)</SelectItem>
+                      <SelectItem value="youtube">YouTube Live</SelectItem>
+                      <SelectItem value="rtmp">RTMP</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select name="category" defaultValue={editingStream?.category || "news"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="news">News</SelectItem>
+                      <SelectItem value="entertainment">Entertainment</SelectItem>
+                      <SelectItem value="sports">Sports</SelectItem>
+                      <SelectItem value="music">Music</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Inactive</p>
-                <p className="text-xl font-bold">{stats.inactive}</p>
+                <Label htmlFor="url">Stream URL</Label>
+                <Input
+                  id="url"
+                  name="url"
+                  type="url"
+                  defaultValue={editingStream?.url}
+                  placeholder="https://example.com/stream.m3u8"
+                  required
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-purple-600" />
+
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Viewers</p>
-                <p className="text-xl font-bold">{stats.totalViewers}</p>
+                <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
+                <Input
+                  id="thumbnailUrl"
+                  name="thumbnailUrl"
+                  type="url"
+                  defaultValue={editingStream?.thumbnailUrl || ""}
+                  placeholder="https://example.com/thumbnail.jpg"
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
+
+              <div>
+                <Label htmlFor="isActive">Status</Label>
+                <Select name="isActive" defaultValue={editingStream?.isActive ? "true" : "false"}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDialog(false);
+                    setEditingStream(undefined);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {editingStream ? "Update" : "Create"} Stream
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Stream Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Live TV Stream Management</CardTitle>
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button 
-                  onClick={() => {
-                    setEditingStream(null);
-                    form.reset();
-                  }}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Stream
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingStream ? "Edit Live Stream" : "Add New Live Stream"}
-                  </DialogTitle>
-                </DialogHeader>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Stream Name (English) *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="DD News" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="nameHindi"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Stream Name (Hindi)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="डीडी न्यूज़" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+      {/* Streams Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStreams.map((stream: LiveStream) => (
+            <Card key={stream.id} className="group hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-lg line-clamp-2">
+                    {stream.name}
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    <Badge
+                      variant={stream.isActive ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {stream.isActive ? "Live" : "Offline"}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {stream.type.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 line-clamp-2">
+                  {stream.description}
+                </p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <Users className="w-3 h-3" />
+                    {stream.viewerCount || 0} viewers
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {stream.category}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Button
+                    size="sm"
+                    variant={stream.isActive ? "destructive" : "default"}
+                    onClick={() => handleToggleStream(stream.id, stream.isActive)}
+                  >
+                    {stream.isActive ? (
+                      <>
+                        <Pause className="w-3 h-3 mr-1" />
+                        Stop
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3 h-3 mr-1" />
+                        Start
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(stream)}
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(stream.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Live news channel providing 24/7 coverage..."
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="streamType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Stream Type *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select stream type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="m3u8">M3U8/HLS</SelectItem>
-                                <SelectItem value="youtube">YouTube Live</SelectItem>
-                                <SelectItem value="custom">Custom/RTMP</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="quality"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quality</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select quality" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="480p">480p</SelectItem>
-                                <SelectItem value="720p">720p HD</SelectItem>
-                                <SelectItem value="1080p">1080p Full HD</SelectItem>
-                                <SelectItem value="4k">4K Ultra HD</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="streamUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stream URL *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="https://example.com/stream.m3u8 or YouTube URL"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="thumbnailUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Thumbnail URL</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="https://example.com/thumbnail.jpg"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="news">News</SelectItem>
-                                <SelectItem value="entertainment">Entertainment</SelectItem>
-                                <SelectItem value="sports">Sports</SelectItem>
-                                <SelectItem value="movies">Movies</SelectItem>
-                                <SelectItem value="kids">Kids</SelectItem>
-                                <SelectItem value="music">Music</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="isActive"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Active Stream</FormLabel>
-                            <div className="text-sm text-muted-foreground">
-                              Enable this stream for viewers
-                            </div>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createStreamMutation.isPending || updateStreamMutation.isPending}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        {editingStream ? "Update" : "Create"} Stream
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Stream</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Quality</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Viewers</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      Loading streams...
-                    </TableCell>
-                  </TableRow>
-                ) : streams.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      No live streams found. Add your first stream to get started.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  streams.map((stream) => (
-                    <TableRow key={stream.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {stream.thumbnailUrl && (
-                            <img
-                              src={stream.thumbnailUrl}
-                              alt={stream.name}
-                              className="w-12 h-8 rounded object-cover"
-                            />
-                          )}
-                          <div>
-                            <h4 className="font-medium">{stream.name}</h4>
-                            {stream.nameHindi && (
-                              <p className="text-sm text-gray-500">{stream.nameHindi}</p>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStreamTypeIcon(stream.streamType)}
-                          <span className="capitalize">{stream.streamType}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getQualityBadge(stream.quality)}</TableCell>
-                      <TableCell className="capitalize">{stream.category}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${
-                            stream.isActive ? 'bg-green-500' : 'bg-gray-400'
-                          }`}></div>
-                          <span>{stream.isActive ? 'Live' : 'Offline'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{stream.viewerCount || 0}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleStreamMutation.mutate({
-                              id: stream.id,
-                              isActive: stream.isActive
-                            })}
-                          >
-                            {stream.isActive ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(stream)}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(`/live-tv?stream=${stream.id}`, '_blank')}
-                          >
-                            <Eye className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => deleteStreamMutation.mutate(stream.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {filteredStreams.length === 0 && !isLoading && (
+        <Card className="text-center py-12">
+          <CardContent>
+            <p className="text-gray-500 mb-4">No live streams found</p>
+            <Button
+              onClick={() => setShowDialog(true)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add First Stream
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

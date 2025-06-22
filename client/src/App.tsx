@@ -13,6 +13,11 @@ import SearchPage from "@/pages/search";
 import AccountPage from "@/pages/account";
 import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminArticlesPage from "@/pages/admin-articles";
+import AdminLiveTVPage from "@/pages/admin-live-tv";
+import AdminVideosPage from "@/pages/admin-videos";
+import AdminRSSPage from "@/pages/admin-rss";
+import AdminUsersPage from "@/pages/admin-users";
 
 function Router() {
   return (
@@ -26,6 +31,11 @@ function Router() {
       <Route path="/account" component={AccountPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/articles" component={AdminArticlesPage} />
+      <Route path="/admin/live-tv" component={AdminLiveTVPage} />
+      <Route path="/admin/videos" component={AdminVideosPage} />
+      <Route path="/admin/rss" component={AdminRSSPage} />
+      <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/*" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
