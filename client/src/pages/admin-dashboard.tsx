@@ -27,6 +27,11 @@ import {
 } from "lucide-react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
+import ArticleManagement from "@/components/admin/ArticleManagement";
+import LiveStreamManagement from "@/components/admin/LiveStreamManagement";
+import VideoManagement from "@/components/admin/VideoManagement";
+import RSSManagement from "@/components/admin/RSSManagement";
+import UserManagement from "@/components/admin/UserManagement";
 import type { Article, LiveStream, Video as VideoType, AdminUser, RssSource } from "@shared/schema";
 
 export default function AdminDashboard() {
@@ -34,22 +39,67 @@ export default function AdminDashboard() {
   
   const { data: articles = [] } = useQuery<Article[]>({
     queryKey: ["/api/admin/articles"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/articles", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch articles");
+      return response.json();
+    },
   });
 
   const { data: liveStreams = [] } = useQuery<LiveStream[]>({
     queryKey: ["/api/admin/live-streams"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/live-streams", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch streams");
+      return response.json();
+    },
   });
 
   const { data: videos = [] } = useQuery<VideoType[]>({
     queryKey: ["/api/admin/videos"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/videos", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch videos");
+      return response.json();
+    },
   });
 
   const { data: users = [] } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/users", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    },
   });
 
   const { data: rssFeeds = [] } = useQuery<RssSource[]>({
     queryKey: ["/api/admin/rss-sources"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/rss-sources", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch RSS sources");
+      return response.json();
+    },
   });
 
   const stats = {
@@ -192,12 +242,13 @@ export default function AdminDashboard() {
 
             {/* Content Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5 lg:w-fit">
+              <TabsList className="grid w-full grid-cols-6 lg:w-fit">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="articles">Articles</TabsTrigger>
                 <TabsTrigger value="videos">Videos</TabsTrigger>
                 <TabsTrigger value="streams">Live TV</TabsTrigger>
                 <TabsTrigger value="rss">RSS Feeds</TabsTrigger>
+                <TabsTrigger value="users">Users</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -326,60 +377,23 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="articles">
-                <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Content Management System</CardTitle>
-                    <CardDescription>Manage news articles and content</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Advanced article management interface will be implemented here with rich text editor, 
-                      draft management, scheduling, and bulk operations.
-                    </p>
-                  </CardContent>
-                </Card>
+                <ArticleManagement />
               </TabsContent>
 
               <TabsContent value="videos">
-                <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Video Management</CardTitle>
-                    <CardDescription>Entertainment section video content</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Video upload, subtitle management, and metadata editing interface will be implemented here.
-                    </p>
-                  </CardContent>
-                </Card>
+                <VideoManagement />
               </TabsContent>
 
               <TabsContent value="streams">
-                <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Live TV Management</CardTitle>
-                    <CardDescription>Manage live streaming channels</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Live stream configuration, M3U8 management, and real-time monitoring will be implemented here.
-                    </p>
-                  </CardContent>
-                </Card>
+                <LiveStreamManagement />
               </TabsContent>
 
               <TabsContent value="rss">
-                <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle>RSS Feed Management</CardTitle>
-                    <CardDescription>Auto-import content from RSS sources</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      RSS source management, auto-fetch configuration, and content import interface will be implemented here.
-                    </p>
-                  </CardContent>
-                </Card>
+                <RSSManagement />
+              </TabsContent>
+
+              <TabsContent value="users">
+                <UserManagement />
               </TabsContent>
             </Tabs>
           </div>
