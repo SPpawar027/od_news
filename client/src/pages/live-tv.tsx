@@ -1,18 +1,37 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import BreakingNewsTicker from "@/components/BreakingNewsTicker";
 import LeftSidebar from "@/components/LeftSidebar";
 import RightSidebar from "@/components/RightSidebar";
 import { LAYOUT_CONFIG } from "@/lib/constants";
-import { Play, Users, Signal } from "lucide-react";
+import { Play, Users, Signal, X, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import type { LiveStream } from "@shared/schema";
 
 export default function LiveTVPage() {
+  const [selectedStream, setSelectedStream] = useState<LiveStream | null>(null);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const { data: streams = [], isLoading } = useQuery<LiveStream[]>({
     queryKey: ["/api/live-streams"],
   });
 
   const activeStreams = streams.filter(stream => stream.isActive);
+
+  const handleStreamClick = (stream: LiveStream) => {
+    setSelectedStream(stream);
+    setIsPlayerOpen(true);
+  };
+
+  const closePlayer = () => {
+    setIsPlayerOpen(false);
+    setSelectedStream(null);
+    setIsFullscreen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
@@ -62,7 +81,10 @@ export default function LiveTVPage() {
                 {activeStreams.map((stream) => (
                   <div key={stream.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                     {/* Stream Thumbnail/Player */}
-                    <div className="aspect-video bg-black relative group cursor-pointer">
+                    <div 
+                      className="aspect-video bg-black relative group cursor-pointer"
+                      onClick={() => handleStreamClick(stream)}
+                    >
                       {stream.thumbnailUrl ? (
                         <img 
                           src={stream.thumbnailUrl} 
@@ -125,13 +147,91 @@ export default function LiveTVPage() {
               </div>
             )}
             
-            {/* Stream Player Modal would go here */}
-            {/* This would be implemented with a modal/dialog for playing the actual stream */}
           </main>
           
           <RightSidebar />
         </div>
       </div>
+
+      {/* Video Player Modal */}
+      <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
+        <DialogContent className={`${isFullscreen ? 'max-w-screen max-h-screen w-screen h-screen' : 'max-w-4xl'} p-0 bg-black`}>
+          {selectedStream && (
+            <div className="relative w-full h-full">
+              {/* Video Player */}
+              <div className="w-full h-full bg-black flex items-center justify-center">
+                {selectedStream.url ? (
+                  <video
+                    src={selectedStream.url}
+                    controls
+                    autoPlay
+                    muted={isMuted}
+                    className="w-full h-full"
+                    onError={() => {
+                      console.error("Failed to load stream");
+                    }}
+                  />
+                ) : (
+                  <div className="text-center text-white p-8">
+                    <Play className="w-16 h-16 mx-auto mb-4 text-red-600" />
+                    <h3 className="text-xl font-bold mb-2">{selectedStream.nameHindi}</h3>
+                    <p className="text-gray-300">Stream URL not available</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Contact admin to configure stream URL for this channel
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Player Controls Overlay */}
+              <div className="absolute top-4 right-4 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-black/50 border-white/20 text-white hover:bg-black/70"
+                  onClick={() => setIsMuted(!isMuted)}
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-black/50 border-white/20 text-white hover:bg-black/70"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                >
+                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-black/50 border-white/20 text-white hover:bg-black/70"
+                  onClick={closePlayer}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Stream Info Overlay */}
+              <div className="absolute bottom-4 left-4 text-white">
+                <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
+                  <h3 className="font-bold text-lg">{selectedStream.nameHindi}</h3>
+                  <p className="text-sm text-gray-300">{selectedStream.name}</p>
+                  <div className="flex items-center gap-4 mt-2 text-sm">
+                    <span className="bg-red-600 text-white px-2 py-1 rounded-full flex items-center gap-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      LIVE
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {selectedStream.viewerCount || 0} viewers
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

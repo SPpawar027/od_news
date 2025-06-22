@@ -356,6 +356,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public RSS Sources (for RSS news page)
+  app.get("/api/rss-sources", async (req, res) => {
+    try {
+      const sources = await storage.getRssSources();
+      const publicSources = sources.filter(source => source.isActive);
+      res.json(publicSources);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch RSS sources" });
+    }
+  });
+
   app.post("/api/admin/rss-sources", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
     try {
       const sourceData = insertRssSourceSchema.parse(req.body);

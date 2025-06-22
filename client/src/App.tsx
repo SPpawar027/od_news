@@ -9,6 +9,7 @@ import ArticlePage from "@/pages/article";
 import CategoryPage from "@/pages/category";
 import LiveTVPage from "@/pages/live-tv";
 import VideosPage from "@/pages/videos";
+import RSSNewsPage from "@/pages/rss-news";
 import SearchPage from "@/pages/search";
 import AccountPage from "@/pages/account";
 import AdminLogin from "@/pages/admin-login";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/live-tv" component={LiveTVPage} />
       <Route path="/videos" component={VideosPage} />
+      <Route path="/rss-news/:category?" component={RSSNewsPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/account" component={AccountPage} />
       <Route path="/admin/login" component={AdminLogin} />
