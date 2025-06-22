@@ -14,7 +14,7 @@ export default function ArticlePage() {
   const articleId = params?.id ? parseInt(params.id) : null;
 
   const { data: article, isLoading: articleLoading } = useQuery<Article>({
-    queryKey: ["/api/articles", articleId],
+    queryKey: [`/api/articles/${articleId}`],
     enabled: !!articleId,
   });
 
@@ -23,7 +23,7 @@ export default function ArticlePage() {
   });
 
   const { data: relatedArticles = [] } = useQuery<Article[]>({
-    queryKey: ["/api/articles", { limit: 5, categoryId: article?.categoryId }],
+    queryKey: [`/api/articles?limit=5&categoryId=${article?.categoryId}`],
     enabled: !!article?.categoryId,
   });
 

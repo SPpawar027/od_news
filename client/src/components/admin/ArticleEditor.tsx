@@ -121,7 +121,14 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
   };
 
   const handlePreview = () => {
-    window.open(`/article/preview`, '_blank');
+    if (article?.id) {
+      window.open(`/article/${article.id}`, '_blank');
+    } else {
+      toast({
+        title: "Info",
+        description: "Please save the article first to preview it",
+      });
+    }
   };
 
   return (
