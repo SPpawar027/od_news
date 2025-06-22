@@ -2,29 +2,29 @@ import type { Express } from "express";
 import { eq, desc, and, like, or, sql } from "drizzle-orm";
 import { db } from "./db";
 import { adminUsers, articles, categories, videos, liveTv, rssFeeds, contentEnhancements, subtitles, breakingNews } from "@shared/schema";
-import { insertAdminUserSchema, insertVideoSchema, insertLiveTvSchema, insertRssFeedSchema, insertContentEnhancementSchema, insertSubtitleSchema, UserRole } from "@shared/schema";
+import { insertAdminUserSchema, insertVideoSchema, insertLiveTvSchema, insertRssFeedSchema, insertContentEnhancementSchema, insertSubtitleSchema, insertBreakingNewsSchema, insertArticleSchema, UserRole } from "@shared/schema";
 import { isAdminAuthenticated, hasPermission, verifyPassword, hashPassword, createDefaultAdminUser } from "./adminAuth";
 
 export async function setupAdminRoutes(app: Express) {
   // Create default admin user on startup
   await createDefaultAdminUser();
 
-  // Admin Authentication
+  // Auth routes
   app.post('/api/admin/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ message: "Username and password required" });
-    }
-
     try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
       const [user] = await db
         .select()
         .from(adminUsers)
-        .where(and(eq(adminUsers.username, username), eq(adminUsers.isActive, true)))
+        .where(eq(adminUsers.username, username))
         .limit(1);
 
-      if (!user) {
+      if (!user || !user.isActive) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -39,16 +39,21 @@ export async function setupAdminRoutes(app: Express) {
         .set({ lastLogin: new Date() })
         .where(eq(adminUsers.id, user.id));
 
-      // Set session
-      req.session.adminUser = { ...user, password: undefined } as any;
+      // Store user in session
+      req.session.adminUser = {
+        id: user.id,
+        username: user.username,
+        email: user.email || '',
+        role: user.role
+      };
 
-      res.json({
-        message: "Login successful",
+      res.json({ 
+        message: "Login successful", 
         user: {
           id: user.id,
           username: user.username,
           email: user.email,
-          role: user.role,
+          role: user.role
         }
       });
     } catch (error) {
@@ -57,45 +62,48 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/logout', isAdminAuthenticated, (req, res) => {
+  app.post('/api/admin/logout', (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         console.error('Logout error:', err);
-        return res.status(500).json({ message: "Logout failed" });
+        return res.status(500).json({ message: "Could not log out" });
       }
-      res.json({ message: "Logged out successfully" });
+      res.json({ message: "Logout successful" });
     });
   });
 
   app.get('/api/admin/me', isAdminAuthenticated, (req, res) => {
-    const user = req.session.adminUser!;
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    });
+    res.json(req.session.adminUser);
   });
 
-  // Dashboard stats endpoint
+  // Dashboard Stats
   app.get('/api/admin/dashboard-stats', isAdminAuthenticated, async (req, res) => {
     try {
-      const [articlesResult] = await db.select({ count: sql`count(*)` }).from(articles);
-      const [categoriesResult] = await db.select({ count: sql`count(*)` }).from(categories);
-      const [videosResult] = await db.select({ count: sql`count(*)` }).from(videos);
-      const [usersResult] = await db.select({ count: sql`count(*)` }).from(adminUsers);
-      
-      const stats = {
-        articles: Number(articlesResult.count) || 0,
-        videos: Number(videosResult.count) || 0,
-        categories: Number(categoriesResult.count) || 0,
-        users: Number(usersResult.count) || 0
-      };
-      
-      res.json(stats);
+      const [articlesCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(articles);
+
+      const [videosCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(videos);
+
+      const [categoriesCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(categories);
+
+      const [usersCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(adminUsers);
+
+      res.json({
+        articles: articlesCount.count || 0,
+        videos: videosCount.count || 0,
+        categories: categoriesCount.count || 0,
+        users: usersCount.count || 0,
+      });
     } catch (error) {
-      console.error('Dashboard stats error:', error);
-      res.status(500).json({ message: 'Failed to fetch dashboard stats' });
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
     }
   });
 
@@ -176,208 +184,89 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/articles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  // Breaking News Management
+  app.get('/api/admin/breaking-news', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
-      const articleData = req.body;
+      const breakingNewsList = await db
+        .select()
+        .from(breakingNews)
+        .orderBy(desc(breakingNews.priority), desc(breakingNews.createdAt));
+
+      res.json(breakingNewsList);
+    } catch (error) {
+      console.error('Error fetching breaking news:', error);
+      res.status(500).json({ message: "Failed to fetch breaking news" });
+    }
+  });
+
+  app.post('/api/admin/breaking-news', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+    try {
+      const validatedData = insertBreakingNewsSchema.parse(req.body);
       
-      const [newArticle] = await db
-        .insert(articles)
+      const [newBreakingNews] = await db
+        .insert(breakingNews)
         .values({
-          ...articleData,
-          publishedAt: new Date(),
-          createdAt: new Date(),
+          ...validatedData,
+          createdAt: new Date()
         })
         .returning();
 
-      res.json(newArticle);
+      res.json(newBreakingNews);
     } catch (error) {
-      console.error('Error creating article:', error);
-      res.status(500).json({ message: "Failed to create article" });
+      console.error('Error creating breaking news:', error);
+      res.status(500).json({ message: "Failed to create breaking news" });
     }
   });
 
-  app.put('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
+  app.put('/api/admin/breaking-news/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
-      const articleId = parseInt(req.params.id);
-      const articleData = req.body;
-
-      const [updatedArticle] = await db
-        .update(articles)
-        .set(articleData)
-        .where(eq(articles.id, articleId))
+      const id = parseInt(req.params.id);
+      const validatedData = insertBreakingNewsSchema.parse(req.body);
+      
+      const [updatedNews] = await db
+        .update(breakingNews)
+        .set(validatedData)
+        .where(eq(breakingNews.id, id))
         .returning();
 
-      if (!updatedArticle) {
-        return res.status(404).json({ message: "Article not found" });
+      if (!updatedNews) {
+        return res.status(404).json({ message: "Breaking news not found" });
       }
 
-      res.json(updatedArticle);
+      res.json(updatedNews);
     } catch (error) {
-      console.error('Error updating article:', error);
-      res.status(500).json({ message: "Failed to update article" });
+      console.error('Error updating breaking news:', error);
+      res.status(500).json({ message: "Failed to update breaking news" });
     }
   });
 
-  app.delete('/api/admin/articles/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.delete('/api/admin/breaking-news/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
-      const articleId = parseInt(req.params.id);
-
-      const [deletedArticle] = await db
-        .delete(articles)
-        .where(eq(articles.id, articleId))
+      const id = parseInt(req.params.id);
+      
+      const [deletedNews] = await db
+        .delete(breakingNews)
+        .where(eq(breakingNews.id, id))
         .returning();
 
-      if (!deletedArticle) {
-        return res.status(404).json({ message: "Article not found" });
+      if (!deletedNews) {
+        return res.status(404).json({ message: "Breaking news not found" });
       }
 
-      res.json({ message: "Article deleted successfully" });
+      res.json({ message: "Breaking news deleted successfully" });
     } catch (error) {
-      console.error('Error deleting article:', error);
-      res.status(500).json({ message: "Failed to delete article" });
+      console.error('Error deleting breaking news:', error);
+      res.status(500).json({ message: "Failed to delete breaking news" });
     }
   });
 
-  // User Management (Manager only)
-  app.get('/api/admin/users', isAdminAuthenticated, hasPermission([UserRole.MANAGER]), async (req, res) => {
+  // Videos Management
+  app.get('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR, UserRole.SUBTITLE_EDITOR]), async (req, res) => {
     try {
-      const users = await db
-        .select({
-          id: adminUsers.id,
-          username: adminUsers.username,
-          email: adminUsers.email,
-          role: adminUsers.role,
-          isActive: adminUsers.isActive,
-          lastLogin: adminUsers.lastLogin,
-          createdAt: adminUsers.createdAt,
-        })
-        .from(adminUsers)
-        .orderBy(desc(adminUsers.createdAt));
-
-      res.json(users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  app.post('/api/admin/users', isAdminAuthenticated, hasPermission([UserRole.MANAGER]), async (req, res) => {
-    try {
-      const userData = insertAdminUserSchema.parse(req.body);
-      const hashedPassword = await hashPassword(userData.password);
-
-      const [newUser] = await db
-        .insert(adminUsers)
-        .values({
-          ...userData,
-          password: hashedPassword,
-        })
-        .returning({
-          id: adminUsers.id,
-          username: adminUsers.username,
-          email: adminUsers.email,
-          role: adminUsers.role,
-          isActive: adminUsers.isActive,
-          createdAt: adminUsers.createdAt,
-        });
-
-      res.status(201).json(newUser);
-    } catch (error) {
-      console.error('Error creating user:', error);
-      res.status(500).json({ message: "Failed to create user" });
-    }
-  });
-
-  app.put('/api/admin/users/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER]), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-
-      if (updateData.password) {
-        updateData.password = await hashPassword(updateData.password);
-      }
-
-      const [updatedUser] = await db
-        .update(adminUsers)
-        .set({ ...updateData, updatedAt: new Date() })
-        .where(eq(adminUsers.id, parseInt(id)))
-        .returning({
-          id: adminUsers.id,
-          username: adminUsers.username,
-          email: adminUsers.email,
-          role: adminUsers.role,
-          isActive: adminUsers.isActive,
-          updatedAt: adminUsers.updatedAt,
-        });
-
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json(updatedUser);
-    } catch (error) {
-      console.error('Error updating user:', error);
-      res.status(500).json({ message: "Failed to update user" });
-    }
-  });
-
-  app.delete('/api/admin/users/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER]), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const currentUserId = req.session.adminUser!.id;
-
-      if (parseInt(id) === currentUserId) {
-        return res.status(400).json({ message: "Cannot delete your own account" });
-      }
-
-      await db.delete(adminUsers).where(eq(adminUsers.id, parseInt(id)));
-      res.json({ message: "User deleted successfully" });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      res.status(500).json({ message: "Failed to delete user" });
-    }
-  });
-
-  // Dashboard Statistics
-  app.get('/api/admin/dashboard-stats', isAdminAuthenticated, async (req, res) => {
-    try {
-      const articlesCount = await db.select({ count: sql`count(*)`.as('count') }).from(articles);
-      const videosCount = await db.select({ count: sql`count(*)`.as('count') }).from(videos);
-      const categoriesCount = await db.select({ count: sql`count(*)`.as('count') }).from(categories);
-      const usersCount = await db.select({ count: sql`count(*)`.as('count') }).from(adminUsers);
-
-      res.json({
-        articles: parseInt(articlesCount[0]?.count as string || '0'),
-        videos: parseInt(videosCount[0]?.count as string || '0'),
-        categories: parseInt(categoriesCount[0]?.count as string || '0'),
-        users: parseInt(usersCount[0]?.count as string || '0'),
-      });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      res.status(500).json({ message: "Failed to fetch dashboard statistics" });
-    }
-  });
-
-  // Video Management
-  app.get('/api/admin/videos', isAdminAuthenticated, async (req, res) => {
-    try {
-      const { page = 1, limit = 10, search = '' } = req.query;
-      const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
-
-      const whereClause = search 
-        ? or(
-            like(videos.title, `%${search}%`),
-            like(videos.titleHindi, `%${search}%`)
-          )
-        : undefined;
-
       const videosList = await db
         .select()
         .from(videos)
-        .where(whereClause)
-        .orderBy(desc(videos.createdAt))
-        .limit(parseInt(limit as string))
-        .offset(offset);
+        .orderBy(desc(videos.createdAt));
 
       res.json(videosList);
     } catch (error) {
@@ -386,35 +275,76 @@ export async function setupAdminRoutes(app: Express) {
     }
   });
 
-  app.post('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.post('/api/admin/videos', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
-      const videoData = insertVideoSchema.parse(req.body);
-      const currentUserId = req.session.adminUser!.id;
-
+      const validatedData = insertVideoSchema.parse(req.body);
+      
       const [newVideo] = await db
         .insert(videos)
         .values({
-          ...videoData,
-          createdBy: currentUserId,
+          ...validatedData,
+          createdAt: new Date()
         })
         .returning();
 
-      res.status(201).json(newVideo);
+      res.json(newVideo);
     } catch (error) {
       console.error('Error creating video:', error);
       res.status(500).json({ message: "Failed to create video" });
     }
   });
 
-  // Live TV Management
-  app.get('/api/admin/live-tv', isAdminAuthenticated, async (req, res) => {
+  app.put('/api/admin/videos/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.LIMITED_EDITOR]), async (req, res) => {
     try {
-      const channels = await db
+      const id = parseInt(req.params.id);
+      const validatedData = insertVideoSchema.parse(req.body);
+      
+      const [updatedVideo] = await db
+        .update(videos)
+        .set(validatedData)
+        .where(eq(videos.id, id))
+        .returning();
+
+      if (!updatedVideo) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      res.json(updatedVideo);
+    } catch (error) {
+      console.error('Error updating video:', error);
+      res.status(500).json({ message: "Failed to update video" });
+    }
+  });
+
+  app.delete('/api/admin/videos/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const [deletedVideo] = await db
+        .delete(videos)
+        .where(eq(videos.id, id))
+        .returning();
+
+      if (!deletedVideo) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      res.json({ message: "Video deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      res.status(500).json({ message: "Failed to delete video" });
+    }
+  });
+
+  // Live TV Management
+  app.get('/api/admin/live-tv', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const liveTvChannels = await db
         .select()
         .from(liveTv)
-        .orderBy(liveTv.sortOrder, desc(liveTv.createdAt));
+        .orderBy(desc(liveTv.createdAt));
 
-      res.json(channels);
+      res.json(liveTvChannels);
     } catch (error) {
       console.error('Error fetching live TV channels:', error);
       res.status(500).json({ message: "Failed to fetch live TV channels" });
@@ -423,33 +353,74 @@ export async function setupAdminRoutes(app: Express) {
 
   app.post('/api/admin/live-tv', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
-      const channelData = insertLiveTvSchema.parse(req.body);
-      const currentUserId = req.session.adminUser!.id;
-
+      const validatedData = insertLiveTvSchema.parse(req.body);
+      
       const [newChannel] = await db
         .insert(liveTv)
         .values({
-          ...channelData,
-          createdBy: currentUserId,
+          ...validatedData,
+          createdAt: new Date()
         })
         .returning();
 
-      res.status(201).json(newChannel);
+      res.json(newChannel);
     } catch (error) {
       console.error('Error creating live TV channel:', error);
       res.status(500).json({ message: "Failed to create live TV channel" });
     }
   });
 
-  // RSS Feed Management
-  app.get('/api/admin/rss-feeds', isAdminAuthenticated, async (req, res) => {
+  app.put('/api/admin/live-tv/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
-      const feeds = await db
+      const id = parseInt(req.params.id);
+      const validatedData = insertLiveTvSchema.parse(req.body);
+      
+      const [updatedChannel] = await db
+        .update(liveTv)
+        .set(validatedData)
+        .where(eq(liveTv.id, id))
+        .returning();
+
+      if (!updatedChannel) {
+        return res.status(404).json({ message: "Live TV channel not found" });
+      }
+
+      res.json(updatedChannel);
+    } catch (error) {
+      console.error('Error updating live TV channel:', error);
+      res.status(500).json({ message: "Failed to update live TV channel" });
+    }
+  });
+
+  app.delete('/api/admin/live-tv/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const [deletedChannel] = await db
+        .delete(liveTv)
+        .where(eq(liveTv.id, id))
+        .returning();
+
+      if (!deletedChannel) {
+        return res.status(404).json({ message: "Live TV channel not found" });
+      }
+
+      res.json({ message: "Live TV channel deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting live TV channel:', error);
+      res.status(500).json({ message: "Failed to delete live TV channel" });
+    }
+  });
+
+  // RSS Feeds Management
+  app.get('/api/admin/rss-feeds', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const rssFeedsList = await db
         .select()
         .from(rssFeeds)
         .orderBy(desc(rssFeeds.createdAt));
 
-      res.json(feeds);
+      res.json(rssFeedsList);
     } catch (error) {
       console.error('Error fetching RSS feeds:', error);
       res.status(500).json({ message: "Failed to fetch RSS feeds" });
@@ -458,100 +429,99 @@ export async function setupAdminRoutes(app: Express) {
 
   app.post('/api/admin/rss-feeds', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
-      const feedData = insertRssFeedSchema.parse(req.body);
-      const currentUserId = req.session.adminUser!.id;
-
+      const validatedData = insertRssFeedSchema.parse(req.body);
+      
       const [newFeed] = await db
         .insert(rssFeeds)
         .values({
-          ...feedData,
-          createdBy: currentUserId,
+          ...validatedData,
+          createdAt: new Date()
         })
         .returning();
 
-      res.status(201).json(newFeed);
+      res.json(newFeed);
     } catch (error) {
       console.error('Error creating RSS feed:', error);
       res.status(500).json({ message: "Failed to create RSS feed" });
     }
   });
 
-  // Content Enhancement with AI
-  app.post('/api/admin/enhance-content', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+  app.put('/api/admin/rss-feeds/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
-      const { articleId, videoId, content } = req.body;
-      const currentUserId = req.session.adminUser!.id;
-
-      // Simple AI-like hashtag generation (in real implementation, integrate with OpenAI/other AI service)
-      const generateHashtags = (text: string): string[] => {
-        const keywords = ['news', 'breaking', 'india', 'politics', 'sports', 'technology', 'entertainment'];
-        const words = text.toLowerCase().split(/\s+/);
-        const tags = keywords.filter(keyword => 
-          words.some(word => word.includes(keyword) || keyword.includes(word))
-        );
-        return tags.map(tag => `#${tag}`);
-      };
-
-      const aiGeneratedTags = generateHashtags(content);
-      const enhancedContent = `${content}\n\nSuggested improvements: Better SEO optimization, enhanced readability.`;
-
-      const [enhancement] = await db
-        .insert(contentEnhancements)
-        .values({
-          articleId: articleId || null,
-          videoId: videoId || null,
-          aiGeneratedTags: JSON.stringify(aiGeneratedTags),
-          enhancedContent,
-          enhancedContentHindi: enhancedContent, // In real implementation, translate
-          seoKeywords: JSON.stringify(aiGeneratedTags),
-          createdBy: currentUserId,
-        })
+      const id = parseInt(req.params.id);
+      const validatedData = insertRssFeedSchema.parse(req.body);
+      
+      const [updatedFeed] = await db
+        .update(rssFeeds)
+        .set(validatedData)
+        .where(eq(rssFeeds.id, id))
         .returning();
 
-      res.status(201).json({
-        ...enhancement,
-        aiGeneratedTags: JSON.parse(enhancement.aiGeneratedTags || '[]'),
-        seoKeywords: JSON.parse(enhancement.seoKeywords || '[]'),
-      });
+      if (!updatedFeed) {
+        return res.status(404).json({ message: "RSS feed not found" });
+      }
+
+      res.json(updatedFeed);
     } catch (error) {
-      console.error('Error enhancing content:', error);
-      res.status(500).json({ message: "Failed to enhance content" });
+      console.error('Error updating RSS feed:', error);
+      res.status(500).json({ message: "Failed to update RSS feed" });
     }
   });
 
-  // Subtitle Management (for Subtitle Editors)
-  app.get('/api/admin/subtitles/:videoId', isAdminAuthenticated, async (req, res) => {
+  app.delete('/api/admin/rss-feeds/:id', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
     try {
-      const { videoId } = req.params;
-      const subtitlesList = await db
+      const id = parseInt(req.params.id);
+      
+      const [deletedFeed] = await db
+        .delete(rssFeeds)
+        .where(eq(rssFeeds.id, id))
+        .returning();
+
+      if (!deletedFeed) {
+        return res.status(404).json({ message: "RSS feed not found" });
+      }
+
+      res.json({ message: "RSS feed deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting RSS feed:', error);
+      res.status(500).json({ message: "Failed to delete RSS feed" });
+    }
+  });
+
+  app.post('/api/admin/rss-feeds/:id/refresh', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Update lastFetched timestamp
+      const [updatedFeed] = await db
+        .update(rssFeeds)
+        .set({ lastFetched: new Date() })
+        .where(eq(rssFeeds.id, id))
+        .returning();
+
+      if (!updatedFeed) {
+        return res.status(404).json({ message: "RSS feed not found" });
+      }
+
+      res.json({ message: "RSS feed refreshed successfully", feed: updatedFeed });
+    } catch (error) {
+      console.error('Error refreshing RSS feed:', error);
+      res.status(500).json({ message: "Failed to refresh RSS feed" });
+    }
+  });
+
+  // Categories
+  app.get('/api/admin/categories', isAdminAuthenticated, async (req, res) => {
+    try {
+      const categoriesList = await db
         .select()
-        .from(subtitles)
-        .where(eq(subtitles.videoId, parseInt(videoId)));
+        .from(categories)
+        .orderBy(categories.name);
 
-      res.json(subtitlesList);
+      res.json(categoriesList);
     } catch (error) {
-      console.error('Error fetching subtitles:', error);
-      res.status(500).json({ message: "Failed to fetch subtitles" });
-    }
-  });
-
-  app.post('/api/admin/subtitles', isAdminAuthenticated, hasPermission([UserRole.MANAGER, UserRole.EDITOR, UserRole.SUBTITLE_EDITOR]), async (req, res) => {
-    try {
-      const subtitleData = insertSubtitleSchema.parse(req.body);
-      const currentUserId = req.session.adminUser!.id;
-
-      const [newSubtitle] = await db
-        .insert(subtitles)
-        .values({
-          ...subtitleData,
-          createdBy: currentUserId,
-        })
-        .returning();
-
-      res.status(201).json(newSubtitle);
-    } catch (error) {
-      console.error('Error creating subtitle:', error);
-      res.status(500).json({ message: "Failed to create subtitle" });
+      console.error('Error fetching categories:', error);
+      res.status(500).json({ message: "Failed to fetch categories" });
     }
   });
 }

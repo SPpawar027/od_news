@@ -9,7 +9,12 @@ import { eq } from "drizzle-orm";
 
 declare module 'express-session' {
   interface SessionData {
-    adminUser?: AdminUser;
+    adminUser?: {
+      id: number;
+      username: string;
+      email: string;
+      role: string;
+    };
   }
 }
 
