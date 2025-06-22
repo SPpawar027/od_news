@@ -6,7 +6,7 @@ import LeftSidebar from "@/components/LeftSidebar";
 import RightSidebar from "@/components/RightSidebar";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 import { Play, Users, Signal, X, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { LiveStream } from "@shared/schema";
 
@@ -156,21 +156,58 @@ export default function LiveTVPage() {
       {/* Video Player Modal */}
       <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
         <DialogContent className={`${isFullscreen ? 'max-w-screen max-h-screen w-screen h-screen' : 'max-w-4xl'} p-0 bg-black`}>
+          <DialogTitle className="sr-only">
+            {selectedStream ? `${selectedStream.nameHindi} Live Stream` : 'Live Stream Player'}
+          </DialogTitle>
           {selectedStream && (
             <div className="relative w-full h-full">
               {/* Video Player */}
               <div className="w-full h-full bg-black flex items-center justify-center">
                 {selectedStream.url ? (
-                  <video
-                    src={selectedStream.url}
-                    controls
-                    autoPlay
-                    muted={isMuted}
-                    className="w-full h-full"
-                    onError={() => {
-                      console.error("Failed to load stream");
-                    }}
-                  />
+                  <div className="w-full h-full relative">
+                    {/* YouTube Embed for demonstrable streaming */}
+                    {selectedStream.name.includes('CNN') ? (
+                      <iframe
+                        src="https://www.youtube.com/embed/live_stream?channel=UCupvZG-5ko_eiXAupbDfxWw&autoplay=1"
+                        className="w-full h-full"
+                        allowFullScreen
+                        title={`${selectedStream.nameHindi} Live Stream`}
+                        allow="autoplay; encrypted-media"
+                      />
+                    ) : selectedStream.name.includes('Al Jazeera') ? (
+                      <iframe
+                        src="https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJj3l8Bg&autoplay=1"
+                        className="w-full h-full"
+                        allowFullScreen
+                        title={`${selectedStream.nameHindi} Live Stream`}
+                        allow="autoplay; encrypted-media"
+                      />
+                    ) : selectedStream.name.includes('France') ? (
+                      <iframe
+                        src="https://www.youtube.com/embed/live_stream?channel=UCQfwfsi5VrQ8yKZ-UWmAEFg&autoplay=1"
+                        className="w-full h-full"
+                        allowFullScreen
+                        title={`${selectedStream.nameHindi} Live Stream`}
+                        allow="autoplay; encrypted-media"
+                      />
+                    ) : (
+                      /* Direct video stream fallback */
+                      <video
+                        src={selectedStream.url}
+                        controls
+                        autoPlay
+                        muted={isMuted}
+                        className="w-full h-full"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.error("Failed to load video stream:", e);
+                        }}
+                        onLoadStart={() => {
+                          console.log("Loading stream:", selectedStream.url);
+                        }}
+                      />
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center text-white p-8">
                     <Play className="w-16 h-16 mx-auto mb-4 text-red-600" />

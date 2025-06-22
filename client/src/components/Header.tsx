@@ -9,6 +9,7 @@ export default function Header() {
     { path: "/", label: "Home" },
     { path: "/live-tv", label: "Live TV" },
     { path: "/videos", label: "Videos" },
+    { path: "/rss-news", label: "RSS News" },
     { path: "/search", label: "Search" },
     { path: "/account", label: "Account" }
   ];
