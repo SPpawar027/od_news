@@ -25,7 +25,7 @@ export default function AdminLogin() {
       return;
     }
 
-    login({ username: email, password }, {
+    login({ email, password }, {
       onError: (error: any) => {
         setError(error.message || "Login failed");
       }

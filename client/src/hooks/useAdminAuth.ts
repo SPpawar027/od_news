@@ -9,7 +9,7 @@ export interface AdminUser {
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -18,14 +18,20 @@ export function useAdminAuth() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await apiRequest("/api/admin/login", {
+      const response = await fetch("/api/admin/login", {
         method: "POST",
-        body: JSON.stringify(credentials),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(credentials),
       });
-      return response;
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Login failed');
+      }
+      
+      return await response.json();
     },
     onSuccess: (data) => {
       // Store the token
@@ -49,12 +55,18 @@ export function useAdminAuth() {
       if (!token) return null;
 
       try {
-        const response = await apiRequest("/api/admin/profile", {
+        const response = await fetch("/api/admin/profile", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        return response;
+        
+        if (!response.ok) {
+          localStorage.removeItem("admin_token");
+          return null;
+        }
+        
+        return await response.json();
       } catch (error) {
         localStorage.removeItem("admin_token");
         throw error;

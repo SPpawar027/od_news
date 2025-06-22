@@ -408,10 +408,11 @@ router.get("/users", verifyToken, requireRole(["manager"]), async (req: AuthRequ
 
 router.post("/users", verifyToken, requireRole(["manager"]), async (req: AuthRequest, res) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { username, email, password, name, role } = req.body;
     
     const hashedPassword = await hashPassword(password);
     const userData = {
+      username,
       email,
       password: hashedPassword,
       name,
@@ -422,6 +423,7 @@ router.post("/users", verifyToken, requireRole(["manager"]), async (req: AuthReq
 
     const [user] = await db.insert(adminUsers).values(userData).returning({
       id: adminUsers.id,
+      username: adminUsers.username,
       email: adminUsers.email,
       name: adminUsers.name,
       role: adminUsers.role,
