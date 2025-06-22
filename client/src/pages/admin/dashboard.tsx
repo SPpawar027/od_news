@@ -1,325 +1,194 @@
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Users, 
-  FileText, 
-  Video, 
-  Layers3, 
-  LogOut, 
-  BarChart3, 
-  Settings, 
-  Plus,
-  TrendingUp,
-  Eye,
-  Edit3,
-  Tv,
-  Rss,
-  Hash
-} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-interface DashboardStats {
+interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
+
+interface Stats {
   articles: number;
   videos: number;
   categories: number;
-  users: number;
+  breaking: number;
 }
 
 export default function AdminDashboard() {
-  const { user, isLoading, isAuthenticated, logout, isLoggingOut } = useAdminAuth();
-  
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/admin/dashboard-stats"],
-    enabled: isAuthenticated,
-  });
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    checkAuth();
+    loadStats();
+  }, []);
 
-  if (!isAuthenticated || !user) {
-    window.location.href = "/admin/login";
-    return null;
-  }
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/admin/me');
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        setLocation("/admin/login");
+      }
+    } catch (error) {
+      setLocation("/admin/login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const statsData = await response.json();
+        setStats(statsData);
+      }
+    } catch (error) {
+      console.error("Failed to load stats:", error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await fetch('/api/admin/logout', { method: 'POST' });
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully"
+      });
+      setLocation("/admin/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
-      case 'manager': return 'bg-red-100 text-red-800';
-      case 'editor': return 'bg-blue-100 text-blue-800';
-      case 'limited_editor': return 'bg-yellow-100 text-yellow-800';
-      case 'subtitle_editor': return 'bg-green-100 text-green-800';
-      case 'viewer': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
-  const getPermissions = (role: string) => {
-    switch (role) {
-      case 'admin': 
-        return ['Super Admin', 'All Features', 'User Management', 'Revenue Data', 'System Settings'];
-      case 'manager': 
-        return ['Full Access', 'User Management', 'Revenue Data', 'All Content'];
-      case 'editor': 
-        return ['Content Management', 'Live TV', 'RSS Feeds', 'Videos', 'Revenue Data'];
-      case 'limited_editor': 
-        return ['Content Management', 'Videos', 'Basic Features'];
-      case 'subtitle_editor': 
-        return ['Subtitle Management', 'Video Access'];
-      case 'viewer': 
-        return ['View Only', 'Reports'];
-      default: 
-        return ['Limited Access'];
-    }
-  };
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-sm">OD</span>
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900">Admin Panel</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">OD News Admin</h1>
+            <p className="text-gray-600">Welcome back, {user.username}</p>
           </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {user.username}!
-          </h2>
-          <p className="text-gray-600">
-            Manage your OD News content and system with comprehensive admin tools.
-          </p>
+          <Button onClick={handleLogout} variant="outline">
+            Logout
+          </Button>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => window.location.href = '/admin/articles'}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Articles</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {statsLoading ? "..." : stats?.articles || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Click to manage articles
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => window.location.href = '/admin/videos'}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Videos</CardTitle>
-              <Video className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {statsLoading ? "..." : stats?.videos || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Click to manage videos
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Categories</CardTitle>
-              <Layers3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {statsLoading ? "..." : stats?.categories || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {user.role !== 'LIMITED_EDITOR' ? '+19% from last month' : 'Available categories'}
-              </p>
-            </CardContent>
-          </Card>
-
-          {user.role !== 'LIMITED_EDITOR' && user.role !== 'SUBTITLE_EDITOR' && user.role !== 'VIEWER' && (
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Articles</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {statsLoading ? "..." : stats?.users || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Revenue analytics available
-                </p>
+                <div className="text-2xl font-bold">{stats.articles}</div>
+                <p className="text-xs text-muted-foreground">Total articles</p>
               </CardContent>
             </Card>
-          )}
-        </div>
 
-        {/* Role Permissions */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Your Role & Permissions</CardTitle>
-            <CardDescription>
-              Current access level and available features for your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {getPermissions(user.role).map((permission, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center space-x-1">
-                  <Eye className="w-3 h-3" />
-                  <span>{permission}</span>
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Content Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Edit3 className="w-5 h-5" />
-                <span>Content Management</span>
-              </CardTitle>
-              <CardDescription>
-                Create and manage articles, breaking news, and editorial content
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(user.role === 'MANAGER' || user.role === 'EDITOR' || user.role === 'LIMITED_EDITOR') && (
-                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/articles'}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Article
-                </Button>
-              )}
-              {(user.role === 'MANAGER' || user.role === 'EDITOR') && (
-                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/breaking-news'}>
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Manage Breaking News
-                </Button>
-              )}
-              {user.role === 'VIEWER' && (
-                <Badge variant="secondary" className="w-full justify-center py-2">
-                  View Only Access
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Media Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Video className="w-5 h-5" />
-                <span>Media Management</span>
-              </CardTitle>
-              <CardDescription>
-                Handle videos, live TV channels, and multimedia content
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(user.role === 'MANAGER' || user.role === 'EDITOR' || user.role === 'LIMITED_EDITOR' || user.role === 'SUBTITLE_EDITOR') && (
-                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/videos'}>
-                  <Video className="w-4 h-4 mr-2" />
-                  Upload Video
-                </Button>
-              )}
-              {(user.role === 'MANAGER' || user.role === 'EDITOR') && (
-                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/live-tv'}>
-                  <Tv className="w-4 h-4 mr-2" />
-                  Manage Live TV
-                </Button>
-              )}
-              {(user.role === 'MANAGER' || user.role === 'EDITOR') && (
-                <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/admin/rss-feeds'}>
-                  <Rss className="w-4 h-4 mr-2" />
-                  RSS Feed Management
-                </Button>
-              )}
-              {user.role === 'SUBTITLE_EDITOR' && (
-                <Button className="w-full justify-start" variant="outline">
-                  <Hash className="w-4 h-4 mr-2" />
-                  Manage Subtitles
-                </Button>
-              )}
-              {user.role === 'VIEWER' && (
-                <Badge variant="secondary" className="w-full justify-center py-2">
-                  View Only Access
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* System Management */}
-          {user.role === 'MANAGER' && (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="w-5 h-5" />
-                  <span>System Management</span>
-                </CardTitle>
-                <CardDescription>
-                  User management, system settings, and administrative tools
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Videos</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="w-4 h-4 mr-2" />
-                  Manage Users
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Analytics & Reports
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Settings className="w-4 h-4 mr-2" />
-                  System Settings
-                </Button>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.videos}</div>
+                <p className="text-xs text-muted-foreground">Total videos</p>
               </CardContent>
             </Card>
-          )}
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Categories</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.categories}</div>
+                <p className="text-xs text-muted-foreground">Total categories</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Breaking News</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.breaking}</div>
+                <p className="text-xs text-muted-foreground">Active breaking news</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Management Options */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>Manage Articles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">Create, edit, and manage news articles</p>
+              <Button className="w-full">Go to Articles</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>Manage Categories</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">Organize content with categories</p>
+              <Button className="w-full">Go to Categories</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>Breaking News</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">Manage urgent breaking news</p>
+              <Button className="w-full">Go to Breaking News</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>Video Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">Upload and manage video content</p>
+              <Button className="w-full">Go to Videos</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>User Role</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">Current role: <span className="font-semibold">{user.role}</span></p>
+              <p className="text-sm text-gray-500">Admin panel access level</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

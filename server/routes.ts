@@ -1,15 +1,28 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { getAdminSession } from "./adminAuth";
-import { setupAdminRoutes } from "./adminRoutes";
+import { setupAdminPanel } from "./admin";
+import session from "express-session";
+import MemoryStore from "memorystore";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Admin session middleware
-  app.use(getAdminSession());
+  // Session setup for admin
+  const MemStore = MemoryStore(session);
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'default-secret-key',
+    store: new MemStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
 
-  // Setup admin routes
-  await setupAdminRoutes(app);
+  // Setup admin panel
+  await setupAdminPanel(app);
 
   // Seed database on startup
   const { seedDatabase } = await import('./seedData');
