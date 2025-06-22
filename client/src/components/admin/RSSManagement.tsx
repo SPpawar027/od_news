@@ -67,8 +67,16 @@ export default function RSSManagement() {
         method: "POST",
       });
     },
-    onSuccess: () => {
+    onSuccess: (data, id) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/rss-sources"] });
+      // Show success message with article count
+      if (data.articlesImported) {
+        alert(`Sync completed! Imported ${data.articlesImported} new articles.`);
+      }
+    },
+    onError: (error) => {
+      console.error("Sync failed:", error);
+      alert("Failed to sync RSS feed. Please try again.");
     },
   });
 
@@ -284,6 +292,12 @@ export default function RSSManagement() {
                         : "Never"
                       }
                     </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Articles Imported:</span>
+                    <Badge variant="outline" className="text-xs">
+                      {source.articlesImported || 0}
+                    </Badge>
                   </div>
                   <div className="flex justify-between items-center pt-2">
                     <Button

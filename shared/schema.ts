@@ -97,6 +97,7 @@ export const rssSources = pgTable("rss_sources", {
   isActive: boolean("is_active").default(true),
   lastFetch: timestamp("last_fetch"),
   fetchInterval: integer("fetch_interval").default(30), // minutes
+  articlesImported: integer("articles_imported").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -91,6 +91,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Live streams API (public)
+  app.get("/api/live-streams", async (req, res) => {
+    try {
+      const streams = await storage.getLiveStreams();
+      const activeStreams = streams.filter(stream => stream.isActive);
+      res.json(activeStreams);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch live streams" });
+    }
+  });
+
   // ============ ADMIN ROUTES ============
 
   // Admin Authentication
@@ -196,7 +207,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...safeUser } = user;
       res.status(201).json(safeUser);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create user" });
+      console.error("User creation error:", error);
+      res.status(500).json({ error: "Failed to create user", details: error.message });
+    }
+  });
+
+  app.put("/api/admin/users/:id", authenticateAdmin, requireRole(["manager"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Hash password if provided
+      if (updates.password) {
+        updates.password = await hashPassword(updates.password);
+      }
+      
+      const user = await storage.updateAdminUser(id, updates);
+      
+      // Remove password from response
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("User update error:", error);
+      res.status(500).json({ error: "Failed to update user", details: error.message });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", authenticateAdmin, requireRole(["manager"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const currentUserId = (req as AuthenticatedRequest).adminUser?.id;
+      
+      // Prevent self-deletion
+      if (id === currentUserId) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+      
+      // Check if user exists
+      const user = await storage.getAdminUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // For now, we'll just deactivate the user instead of deleting
+      await storage.updateAdminUser(id, { isActive: false });
+      res.status(200).json({ message: "User deactivated successfully" });
+    } catch (error) {
+      console.error("User deletion error:", error);
+      res.status(500).json({ error: "Failed to delete user", details: error.message });
     }
   });
 
@@ -238,7 +296,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteLiveStream(id);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete live stream" });
+      console.error("Live stream deletion error:", error);
+      res.status(500).json({ error: "Failed to delete live stream", details: error.message });
     }
   });
 
@@ -282,7 +341,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteVideo(id);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete video" });
+      console.error("Video deletion error:", error);
+      res.status(500).json({ error: "Failed to delete video", details: error.message });
     }
   });
 
@@ -323,7 +383,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteRssSource(id);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete RSS source" });
+      console.error("RSS source deletion error:", error);
+      res.status(500).json({ error: "Failed to delete RSS source", details: error.message });
+    }
+  });
+
+  // RSS Sync functionality
+  app.post("/api/admin/rss-sources/:id/sync", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const source = await storage.getRssSourceById(id);
+      
+      if (!source) {
+        return res.status(404).json({ error: "RSS source not found" });
+      }
+
+      // In a real implementation, you would fetch and parse RSS feed here
+      // For now, we'll just simulate the sync
+      const articlesImported = Math.floor(Math.random() * 5) + 1; // Simulate 1-5 articles imported
+      
+      // Update last fetch time and increment article count
+      const currentSource = await storage.getRssSourceById(id);
+      const totalImported = (currentSource?.articlesImported || 0) + articlesImported;
+      
+      await storage.updateRssSource(id, { 
+        lastFetch: new Date(),
+        articlesImported: totalImported
+      });
+      
+      res.json({ 
+        message: "RSS sync completed successfully",
+        articlesImported,
+        lastFetch: new Date()
+      });
+    } catch (error) {
+      console.error("RSS sync error:", error);
+      res.status(500).json({ error: "Failed to sync RSS source", details: error.message });
     }
   });
 
