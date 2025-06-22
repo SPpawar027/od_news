@@ -215,12 +215,117 @@ export class MemStorage implements IStorage {
         isBreaking: false,
         isTrending: false,
         publishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+      },
+      // Additional articles for different categories
+      {
+        title: "Local Government Announces New Development Projects",
+        titleHindi: "स्थानीय प्रशासन ने नई विकास परियोजनाओं की घोषणा की",
+        content: "Local municipal corporation has announced several new development projects...",
+        contentHindi: "स्थानीय नगर निगम ने कई नई विकास परियोजनाओं की घोषणा की है। इन परियोजनाओं में सड़क निर्माण, पार्क विकास और जल आपूर्ति में सुधार शामिल है। मेयर ने कहा कि ये सभी काम अगले छह महीने में पूरे हो जाएंगे।",
+        excerpt: "Municipal corporation announces infrastructure improvements...",
+        excerptHindi: "स्थानीय नगर निगम ने कई नई विकास परियोजनाओं की घोषणा की है। इन परियोजनाओं में सड़क निर्माण, पार्क विकास और जल आपूर्ति में सुधार शामिल है।",
+        imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 2,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
+      },
+      {
+        title: "International Climate Summit Begins Today",
+        titleHindi: "अंतरराष्ट्रीय जलवायु शिखर सम्मेलन आज से शुरू",
+        content: "World leaders gather for climate discussions...",
+        contentHindi: "दुनिया भर के नेता जलवायु परिवर्तन पर चर्चा के लिए एक साथ आए हैं। इस शिखर सम्मेलन में कार्बन उत्सर्जन कम करने और नवीकरणीय ऊर्जा पर बल दिया जा रहा है।",
+        excerpt: "Global leaders discuss climate action...",
+        excerptHindi: "दुनिया भर के नेता जलवायु परिवर्तन पर चर्चा के लिए एक साथ आए हैं। इस शिखर सम्मेलन में कार्बन उत्सर्जन कम करने और नवीकरणीय ऊर्जा पर बल दिया जा रहा है।",
+        imageUrl: "https://images.unsplash.com/photo-1569163139394-de4e4f43e4e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 7,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 hours ago
+      },
+      {
+        title: "New AI Research Breakthrough Announced",
+        titleHindi: "कृत्रिम बुद्धिमत्ता में नई खोज की घोषणा",
+        content: "Scientists announce major AI advancement...",
+        contentHindi: "वैज्ञानिकों ने कृत्रिम बुद्धिमत्ता के क्षेत्र में एक महत्वपूर्ण खोज की घोषणा की है। इस नई तकनीक से मेडिकल डायग्नोसिस में क्रांति आ सकती है।",
+        excerpt: "AI breakthrough could revolutionize medical diagnosis...",
+        excerptHindi: "वैज्ञानिकों ने कृत्रिम बुद्धिमत्ता के क्षेत्र में एक महत्वपूर्ण खोज की घोषणा की है। इस नई तकनीक से मेडिकल डायग्नोसिस में क्रांति आ सकती है।",
+        imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 8,
+        isBreaking: false,
+        isTrending: true,
+        publishedAt: new Date(Date.now() - 7 * 60 * 60 * 1000) // 7 hours ago
+      },
+      {
+        title: "Football World Cup Qualifier Results",
+        titleHindi: "फुटबॉल विश्व कप क्वालिफायर के परिणाम",
+        content: "Exciting matches in World Cup qualifiers...",
+        contentHindi: "विश्व कप क्वालिफायर में रोमांचक मैच देखने को मिले। भारतीय टीम ने अपने समूह में दूसरा स्थान हासिल किया है। कोच ने खिलाड़ियों के प्रदर्शन की सराहना की।",
+        excerpt: "Indian team secures second position in group...",
+        excerptHindi: "विश्व कप क्वालिफायर में रोमांचक मैच देखने को मिले। भारतीय टीम ने अपने समूह में दूसरा स्थान हासिल किया है।",
+        imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 11,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 9 * 60 * 60 * 1000) // 9 hours ago
+      },
+      {
+        title: "Health and Wellness Tips for Winter",
+        titleHindi: "सर्दियों में स्वास्थ्य और कल्याण के लिए सुझाव",
+        content: "Expert advice for staying healthy during winter months...",
+        contentHindi: "सर्दियों के महीनों में स्वस्थ रहने के लिए विशेषज्ञों की सलाह। नियमित व्यायाम, संतुलित आहार और पर्याप्त नींद जरूरी है। गर्म कपड़े पहनना और हाइड्रेटेड रहना भी महत्वपूर्ण है।",
+        excerpt: "Winter health tips from medical experts...",
+        excerptHindi: "सर्दियों के महीनों में स्वस्थ रहने के लिए विशेषज्ञों की सलाह। नियमित व्यायाम, संतुलित आहार और पर्याप्त नींद जरूरी है।",
+        imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 10,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 11 * 60 * 60 * 1000) // 11 hours ago
+      },
+      {
+        title: "Job Market Trends in Technology Sector",
+        titleHindi: "तकनीकी क्षेत्र में नौकरी के बाजार के रुझान",
+        content: "Analysis of current job market in tech industry...",
+        contentHindi: "तकनीकी उद्योग में वर्तमान नौकरी बाजार का विश्लेषण। AI, डेटा साइंस और साइबर सिक्योरिटी में सबसे ज्यादा मांग है। नए स्किल सीखने वाले युवाओं के लिए बेहतर अवसर हैं।",
+        excerpt: "High demand for AI and cybersecurity professionals...",
+        excerptHindi: "तकनीकी उद्योग में वर्तमान नौकरी बाजार का विश्लेषण। AI, डेटा साइंस और साइबर सिक्योरिटी में सबसे ज्यादा मांग है।",
+        imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 13,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 13 * 60 * 60 * 1000) // 13 hours ago
+      },
+      {
+        title: "Utility Services Upgrade in Metropolitan Area",
+        titleHindi: "महानगरीय क्षेत्र में उपयोगिता सेवाओं का उन्नयन",
+        content: "Major utility infrastructure improvements announced...",
+        contentHindi: "प्रमुख उपयोगिता अवसंरचना सुधार की घोषणा। बिजली, पानी और इंटरनेट सेवाओं में सुधार होगा। नागरिकों को बेहतर सुविधाएं मिलेंगी।",
+        excerpt: "Infrastructure improvements for better citizen services...",
+        excerptHindi: "प्रमुख उपयोगिता अवसंरचना सुधार की घोषणा। बिजली, पानी और इंटरनेट सेवाओं में सुधार होगा।",
+        imageUrl: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 12,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 15 * 60 * 60 * 1000) // 15 hours ago
+      },
+      {
+        title: "Exclusive Interview with Film Director",
+        titleHindi: "फिल्म निर्देशक के साथ विशेष बातचीत",
+        content: "Exclusive content from our entertainment division...",
+        contentHindi: "हमारे मनोरंजन विभाग की विशेष सामग्री। प्रसिद्ध फिल्म निर्देशक ने अपनी आगामी फिल्म के बारे में बात की। इस फिल्म में सामाजिक संदेश होगा।",
+        excerpt: "Director discusses upcoming social message film...",
+        excerptHindi: "हमारे मनोरंजन विभाग की विशेष सामग्री। प्रसिद्ध फिल्म निर्देशक ने अपनी आगामी फिल्म के बारे में बात की।",
+        imageUrl: "https://images.unsplash.com/photo-1489599797989-340a36f2b89f?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150",
+        categoryId: 6,
+        isBreaking: false,
+        isTrending: false,
+        publishedAt: new Date(Date.now() - 17 * 60 * 60 * 1000) // 17 hours ago
       }
     ];
 
     articlesData.forEach(article => {
       const id = this.currentArticleId++;
-      this.articles.set(id, { ...article, id, createdAt: new Date() });
+      this.articles.set(id, { ...article, id, createdAt: new Date(), publishedAt: article.publishedAt || new Date() });
     });
   }
 

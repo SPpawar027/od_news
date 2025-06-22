@@ -34,7 +34,7 @@ export default function LeftSidebar() {
           {categories.map((category) => (
             <a 
               key={category.id}
-              href={`#${category.slug}`} 
+              href={`/category/${category.slug}`} 
               className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
             >
               <div 
