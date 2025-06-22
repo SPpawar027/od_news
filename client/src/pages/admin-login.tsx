@@ -26,12 +26,17 @@ export default function AdminLogin() {
     }
 
     login({ email, password }, {
+      onSuccess: () => {
+        // Force redirect after successful login
+        window.location.href = "/admin";
+      },
       onError: (error: any) => {
         setError(error.message || "Login failed");
       }
     });
   };
 
+  // Redirect if already authenticated
   if (isAuthenticated) {
     window.location.href = "/admin";
     return null;

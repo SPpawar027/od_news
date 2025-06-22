@@ -50,7 +50,7 @@ interface AdminUser {
 }
 
 export default function AdminDashboard() {
-  const { admin, logout, isAuthenticated } = useAdminAuth();
+  const { admin, logout, isAuthenticated, isLoading } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const { data: stats } = useQuery<DashboardStats>({
@@ -68,9 +68,20 @@ export default function AdminDashboard() {
     enabled: isAuthenticated && activeTab === "users" && admin?.role === "manager",
   });
 
-  if (!isAuthenticated) {
+  if (!isLoading && !isAuthenticated) {
     window.location.href = "/admin/login";
     return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading admin panel...</p>
+        </div>
+      </div>
+    );
   }
 
   const getRoleBadgeColor = (role: string) => {

@@ -36,7 +36,9 @@ export function useAdminAuth() {
     onSuccess: (data) => {
       // Store the token
       localStorage.setItem("admin_token", data.token);
-      // Invalidate and refetch user data
+      // Set user data directly to avoid race condition
+      queryClient.setQueryData(["/api/admin/profile"], data.admin);
+      // Also invalidate to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/admin/profile"] });
     },
   });
