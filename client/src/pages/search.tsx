@@ -28,15 +28,15 @@ export default function SearchPage() {
 
   // Search functionality
   useEffect(() => {
-    if (searchQuery.trim()) {
+    if (searchQuery.trim() && articles.length > 0) {
       const filtered = articles.filter(article => {
         const matchesQuery = 
           article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          article.titleHindi.includes(searchQuery) ||
-          article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          article.contentHindi.includes(searchQuery) ||
-          article.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          article.excerptHindi.includes(searchQuery);
+          (article.titleHindi && article.titleHindi.includes(searchQuery)) ||
+          (article.content && article.content.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (article.contentHindi && article.contentHindi.includes(searchQuery)) ||
+          (article.excerpt && article.excerpt.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (article.excerptHindi && article.excerptHindi.includes(searchQuery));
 
         const matchesFilter = activeFilter === "all" || 
           (activeFilter === "breaking" && article.isBreaking) ||

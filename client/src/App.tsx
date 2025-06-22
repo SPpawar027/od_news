@@ -11,6 +11,8 @@ import LiveTVPage from "@/pages/live-tv";
 import VideosPage from "@/pages/videos";
 import SearchPage from "@/pages/search";
 import AccountPage from "@/pages/account";
+import AdminLogin from "@/pages/admin-login";
+import AdminDashboard from "@/pages/admin-dashboard";
 
 function Router() {
   return (
@@ -22,6 +24,9 @@ function Router() {
       <Route path="/videos" component={VideosPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/account" component={AccountPage} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/*" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );

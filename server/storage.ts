@@ -2,12 +2,27 @@ import {
   categories,
   articles,
   breakingNews,
+  adminUsers,
+  liveStreams,
+  videos,
+  rssSources,
+  articleDrafts,
   type Category,
   type InsertCategory,
   type Article,
   type InsertArticle,
   type BreakingNews,
   type InsertBreakingNews,
+  type AdminUser,
+  type InsertAdminUser,
+  type LiveStream,
+  type InsertLiveStream,
+  type Video,
+  type InsertVideo,
+  type RssSource,
+  type InsertRssSource,
+  type ArticleDraft,
+  type InsertArticleDraft,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -23,6 +38,42 @@ export interface IStorage {
   
   getBreakingNews(): Promise<BreakingNews[]>;
   createBreakingNews(news: InsertBreakingNews): Promise<BreakingNews>;
+
+  // Admin User Management
+  getAdminUserByEmail(email: string): Promise<AdminUser | undefined>;
+  getAdminUserById(id: number): Promise<AdminUser | undefined>;
+  createAdminUser(user: InsertAdminUser): Promise<AdminUser>;
+  getAdminUsers(): Promise<AdminUser[]>;
+  updateAdminUser(id: number, updates: Partial<AdminUser>): Promise<AdminUser>;
+
+  // Live Stream Management
+  getLiveStreams(): Promise<LiveStream[]>;
+  getLiveStreamById(id: number): Promise<LiveStream | undefined>;
+  createLiveStream(stream: InsertLiveStream): Promise<LiveStream>;
+  updateLiveStream(id: number, updates: Partial<LiveStream>): Promise<LiveStream>;
+  deleteLiveStream(id: number): Promise<void>;
+
+  // Video Management
+  getVideos(): Promise<Video[]>;
+  getVideoById(id: number): Promise<Video | undefined>;
+  createVideo(video: InsertVideo): Promise<Video>;
+  updateVideo(id: number, updates: Partial<Video>): Promise<Video>;
+  deleteVideo(id: number): Promise<void>;
+
+  // RSS Source Management
+  getRssSources(): Promise<RssSource[]>;
+  getRssSourceById(id: number): Promise<RssSource | undefined>;
+  createRssSource(source: InsertRssSource): Promise<RssSource>;
+  updateRssSource(id: number, updates: Partial<RssSource>): Promise<RssSource>;
+  deleteRssSource(id: number): Promise<void>;
+
+  // Article Draft Management
+  getArticleDrafts(): Promise<ArticleDraft[]>;
+  getArticleDraftById(id: number): Promise<ArticleDraft | undefined>;
+  createArticleDraft(draft: InsertArticleDraft): Promise<ArticleDraft>;
+  updateArticleDraft(id: number, updates: Partial<ArticleDraft>): Promise<ArticleDraft>;
+  deleteArticleDraft(id: number): Promise<void>;
+  publishArticleDraft(id: number): Promise<Article>;
 }
 
 export class MemStorage implements IStorage {
@@ -312,6 +363,151 @@ export class DatabaseStorage implements IStorage {
       .values(insertBreakingNews)
       .returning();
     return news;
+  }
+
+  // Admin User Management
+  async getAdminUserByEmail(email: string): Promise<AdminUser | undefined> {
+    const [user] = await db.select().from(adminUsers).where(eq(adminUsers.email, email));
+    return user;
+  }
+
+  async getAdminUserById(id: number): Promise<AdminUser | undefined> {
+    const [user] = await db.select().from(adminUsers).where(eq(adminUsers.id, id));
+    return user;
+  }
+
+  async createAdminUser(insertUser: InsertAdminUser): Promise<AdminUser> {
+    const [user] = await db.insert(adminUsers).values(insertUser).returning();
+    return user;
+  }
+
+  async getAdminUsers(): Promise<AdminUser[]> {
+    return await db.select().from(adminUsers);
+  }
+
+  async updateAdminUser(id: number, updates: Partial<AdminUser>): Promise<AdminUser> {
+    const [user] = await db.update(adminUsers).set(updates).where(eq(adminUsers.id, id)).returning();
+    return user;
+  }
+
+  // Live Stream Management
+  async getLiveStreams(): Promise<LiveStream[]> {
+    return await db.select().from(liveStreams);
+  }
+
+  async getLiveStreamById(id: number): Promise<LiveStream | undefined> {
+    const [stream] = await db.select().from(liveStreams).where(eq(liveStreams.id, id));
+    return stream;
+  }
+
+  async createLiveStream(insertStream: InsertLiveStream): Promise<LiveStream> {
+    const [stream] = await db.insert(liveStreams).values(insertStream).returning();
+    return stream;
+  }
+
+  async updateLiveStream(id: number, updates: Partial<LiveStream>): Promise<LiveStream> {
+    const [stream] = await db.update(liveStreams).set(updates).where(eq(liveStreams.id, id)).returning();
+    return stream;
+  }
+
+  async deleteLiveStream(id: number): Promise<void> {
+    await db.delete(liveStreams).where(eq(liveStreams.id, id));
+  }
+
+  // Video Management
+  async getVideos(): Promise<Video[]> {
+    return await db.select().from(videos);
+  }
+
+  async getVideoById(id: number): Promise<Video | undefined> {
+    const [video] = await db.select().from(videos).where(eq(videos.id, id));
+    return video;
+  }
+
+  async createVideo(insertVideo: InsertVideo): Promise<Video> {
+    const [video] = await db.insert(videos).values(insertVideo).returning();
+    return video;
+  }
+
+  async updateVideo(id: number, updates: Partial<Video>): Promise<Video> {
+    const [video] = await db.update(videos).set(updates).where(eq(videos.id, id)).returning();
+    return video;
+  }
+
+  async deleteVideo(id: number): Promise<void> {
+    await db.delete(videos).where(eq(videos.id, id));
+  }
+
+  // RSS Source Management
+  async getRssSources(): Promise<RssSource[]> {
+    return await db.select().from(rssSources);
+  }
+
+  async getRssSourceById(id: number): Promise<RssSource | undefined> {
+    const [source] = await db.select().from(rssSources).where(eq(rssSources.id, id));
+    return source;
+  }
+
+  async createRssSource(insertSource: InsertRssSource): Promise<RssSource> {
+    const [source] = await db.insert(rssSources).values(insertSource).returning();
+    return source;
+  }
+
+  async updateRssSource(id: number, updates: Partial<RssSource>): Promise<RssSource> {
+    const [source] = await db.update(rssSources).set(updates).where(eq(rssSources.id, id)).returning();
+    return source;
+  }
+
+  async deleteRssSource(id: number): Promise<void> {
+    await db.delete(rssSources).where(eq(rssSources.id, id));
+  }
+
+  // Article Draft Management
+  async getArticleDrafts(): Promise<ArticleDraft[]> {
+    return await db.select().from(articleDrafts);
+  }
+
+  async getArticleDraftById(id: number): Promise<ArticleDraft | undefined> {
+    const [draft] = await db.select().from(articleDrafts).where(eq(articleDrafts.id, id));
+    return draft;
+  }
+
+  async createArticleDraft(insertDraft: InsertArticleDraft): Promise<ArticleDraft> {
+    const [draft] = await db.insert(articleDrafts).values(insertDraft).returning();
+    return draft;
+  }
+
+  async updateArticleDraft(id: number, updates: Partial<ArticleDraft>): Promise<ArticleDraft> {
+    const [draft] = await db.update(articleDrafts).set(updates).where(eq(articleDrafts.id, id)).returning();
+    return draft;
+  }
+
+  async deleteArticleDraft(id: number): Promise<void> {
+    await db.delete(articleDrafts).where(eq(articleDrafts.id, id));
+  }
+
+  async publishArticleDraft(id: number): Promise<Article> {
+    const draft = await this.getArticleDraftById(id);
+    if (!draft) {
+      throw new Error("Draft not found");
+    }
+
+    const articleData: InsertArticle = {
+      title: draft.title,
+      titleHindi: draft.titleHindi,
+      content: draft.content,
+      contentHindi: draft.contentHindi,
+      excerpt: draft.excerpt,
+      excerptHindi: draft.excerptHindi,
+      imageUrl: draft.imageUrl,
+      authorName: draft.authorName,
+      categoryId: draft.categoryId,
+      publishedAt: new Date(),
+    };
+
+    const article = await this.createArticle(articleData);
+    await this.deleteArticleDraft(id);
+    return article;
   }
 }
 
