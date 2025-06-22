@@ -103,10 +103,10 @@ export default function CategoryPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 font-hindi">
-                    {category.nameHindi}
+                    {category.titleHindi}
                   </h1>
                   <p className="text-gray-600 font-hindi">
-                    {category.nameHindi} से जुड़ी सभी खबरें
+                    {category.titleHindi} से जुड़ी सभी खबरें
                   </p>
                 </div>
               </div>

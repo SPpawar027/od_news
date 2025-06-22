@@ -7,13 +7,6 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ArticlePage from "@/pages/article";
 import CategoryPage from "@/pages/category";
-import AdminLogin from "@/pages/admin/login";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminArticles from "@/pages/admin/articles";
-import AdminVideos from "@/pages/admin/videos";
-import AdminBreakingNews from "@/pages/admin/breaking-news";
-import AdminLiveTv from "@/pages/admin/live-tv";
-import AdminRssFeeds from "@/pages/admin/rss-feeds";
 
 function Router() {
   return (
@@ -21,13 +14,6 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/article/:id" component={ArticlePage} />
       <Route path="/category/:slug" component={CategoryPage} />
-      <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/articles" component={AdminArticles} />
-      <Route path="/admin/videos" component={AdminVideos} />
-      <Route path="/admin/breaking-news" component={AdminBreakingNews} />
-      <Route path="/admin/live-tv" component={AdminLiveTv} />
-      <Route path="/admin/rss-feeds" component={AdminRssFeeds} />
       <Route component={NotFound} />
     </Switch>
   );

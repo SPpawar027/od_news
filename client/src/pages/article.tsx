@@ -120,7 +120,7 @@ export default function ArticlePage() {
                 <div className="flex items-center space-x-3 mb-4">
                   {category && (
                     <span className={`${CATEGORY_COLORS[category.color as keyof typeof CATEGORY_COLORS]} text-white text-sm font-semibold px-3 py-1 rounded font-hindi`}>
-                      {category.nameHindi}
+                      {category.titleHindi}
                     </span>
                   )}
                   <span className="text-gray-500 text-sm">{timeAgoHindi}</span>

@@ -43,7 +43,7 @@ export default function LeftSidebar() {
                 <span className="text-white text-sm">{category.icon}</span>
               </div>
               <span className="font-medium text-gray-700 group-hover:text-red-600 font-hindi">
-                {category.nameHindi}
+                {category.titleHindi}
               </span>
             </a>
           ))}
