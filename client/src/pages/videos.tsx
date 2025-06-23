@@ -6,6 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play, Eye, Clock, Search, Filter, TrendingUp, Calendar } from "lucide-react";
 import Header from "@/components/Header";
+import LeftSidebar from "@/components/LeftSidebar";
+import RightSidebar from "@/components/RightSidebar";
+import MobileBottomNav from "@/components/MobileBottomNav";
+import SEOHead from "@/components/SEOHead";
+import { LAYOUT_CONFIG } from "@/lib/constants";
 
 interface Video {
   id: number;
@@ -121,74 +126,93 @@ export default function VideosPage() {
   const recentVideos = videos.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gray-50 font-hindi">
+      <SEOHead 
+        title="Videos - OD News | समाचार वीडियो"
+        description="OD News पर ताजा समाचार वीडियो देखें। राजनीति, खेल, मनोरंजन और अन्य विषयों के वीडियो कंटेंट का आनंद लें।"
+        keywords="समाचार वीडियो, न्यूज़ वीडियो, OD News वीडियो, हिंदी समाचार वीडियो"
+      />
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            Videos
-          </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-300 mb-4">
-            Watch latest news videos and exclusive content
-          </p>
-          <p className="text-lg text-slate-600 dark:text-slate-300">
-            नवीनतम समाचार वीडियो और विशेष सामग्री देखें
-          </p>
-        </div>
 
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                placeholder="Search videos... वीडियो खोजें..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+      {/* Main Content Container with Fixed Sidebars */}
+      <div className="relative">
+        <div className="mx-auto px-4 py-6 pb-20 lg:pb-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
+          <div className="flex gap-6">
+            {/* Fixed Left Sidebar */}
+            <div className="hidden lg:block w-80 flex-shrink-0">
+              <div className="sticky top-24">
+                <LeftSidebar />
+              </div>
             </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </Button>
-          </div>
+            
+            {/* Main Content Area */}
+            <div className="flex-1 lg:flex lg:gap-6">
+              <div className="flex-1">
+                <div className="mb-8">
+                  <h1 className="text-4xl font-bold text-gray-800 mb-2 font-hindi">
+                    वीडियो
+                  </h1>
+                  <p className="text-lg text-gray-600 mb-4">
+                    Watch latest news videos and exclusive content
+                  </p>
+                  <p className="text-lg text-gray-600 font-hindi">
+                    नवीनतम समाचार वीडियो और विशेष सामग्री देखें
+                  </p>
+                </div>
 
-          {/* Category Filter */}
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="capitalize"
-              >
-                {category === "all" ? "All Categories" : category}
-              </Button>
-            ))}
-          </div>
-        </div>
+                {/* Search and Filters */}
+                <div className="mb-8 space-y-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        placeholder="Search videos... वीडियो खोजें..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Filter className="w-4 h-4" />
+                      Filters
+                    </Button>
+                  </div>
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              All Videos
-            </TabsTrigger>
-            <TabsTrigger value="trending" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Trending
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Recent
-            </TabsTrigger>
-          </TabsList>
+                  {/* Category Filter */}
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => (
+                      <Button
+                        key={category}
+                        variant={selectedCategory === category ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(category)}
+                        className="capitalize"
+                      >
+                        {category === "all" ? "All Categories" : category}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-          <TabsContent value="all">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredVideos.map((video) => (
+                <Tabs defaultValue="all" className="space-y-6">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all" className="flex items-center gap-2">
+                      <Eye className="w-4 h-4" />
+                      All Videos
+                    </TabsTrigger>
+                    <TabsTrigger value="trending" className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Trending
+                    </TabsTrigger>
+                    <TabsTrigger value="recent" className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Recent
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="all">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredVideos.map((video) => (
                 <Card key={video.id} className="cursor-pointer hover:shadow-lg transition-all duration-200 group">
                   <div className="relative">
                     <img
@@ -351,7 +375,21 @@ export default function VideosPage() {
             </div>
           </TabsContent>
         </Tabs>
+              </div>
+              
+              {/* Fixed Right Sidebar */}
+              <div className="hidden lg:block w-80 flex-shrink-0">
+                <div className="sticky top-24">
+                  <RightSidebar />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }
