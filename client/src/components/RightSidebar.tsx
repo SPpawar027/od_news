@@ -114,10 +114,10 @@ export default function RightSidebar() {
   };
 
   return (
-    <aside className="flex-shrink-0 hidden lg:block" style={{ width: LAYOUT_CONFIG.sidebar.right.width }}>
+    <aside className="flex-shrink-0 hidden lg:block space-y-8" style={{ width: LAYOUT_CONFIG.sidebar.right.width }}>
       {/* Weather Widget */}
       {weather && (
-        <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg mb-6 p-6 text-white">
+        <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <MapPin className="w-4 h-4" />
@@ -161,7 +161,7 @@ export default function RightSidebar() {
 
       {/* Daily Rashifal */}
       {todayRashifal && (
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg mb-6 p-6 text-white">
+        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg p-5 text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Star className="w-5 h-5" />
@@ -236,18 +236,23 @@ export default function RightSidebar() {
       {/* Advertisement Space */}
       {sidebarAds.length > 0 ? (
         sidebarAds.map((ad) => (
-          <div key={ad.id} className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
+          <div key={ad.id} className="bg-white rounded-xl shadow-lg border border-gray-100"
+               itemScope itemType="https://schema.org/Advertisement"
+               data-ad-id={ad.id}>
             <div className="p-3">
               <div className="text-xs text-gray-500 mb-2 text-center">विज्ञापन</div>
               {ad.linkUrl ? (
-                <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block"
+                   itemProp="url">
                   <img 
                     src={ad.imageUrl || ''} 
                     alt={ad.title}
                     className="w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
                     style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
+                    loading="lazy"
+                    itemProp="image"
                   />
-                  <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center">{ad.title}</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center" itemProp="name">{ad.title}</h4>
                 </a>
               ) : (
                 <div>
@@ -256,8 +261,10 @@ export default function RightSidebar() {
                     alt={ad.title}
                     className="w-full h-auto rounded-lg"
                     style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
+                    loading="lazy"
+                    itemProp="image"
                   />
-                  <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center">{ad.title}</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center" itemProp="name">{ad.title}</h4>
                 </div>
               )}
             </div>

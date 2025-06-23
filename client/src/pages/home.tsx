@@ -3,6 +3,7 @@ import LeftSidebar from "@/components/LeftSidebar";
 import MainContent from "@/components/MainContent";
 import RightSidebar from "@/components/RightSidebar";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import SEOHead from "@/components/SEOHead";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 import { useScrollTrigger } from "@/hooks/use-scroll";
 
@@ -11,6 +12,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
+      <SEOHead 
+        title="OD News - भारत की प्रमुख समाचार वेबसाइट | ताजा समाचार और न्यूज़"
+        description="OD News पर पढ़ें भारत और दुनिया की ताजा खबरें। राजनीति, खेल, मनोरंजन, व्यापार, तकनीक की सबसे तेज़ और सच्ची समाचार। 24x7 लाइव न्यूज़ अपडेट।"
+        keywords="समाचार, न्यूज़, भारत न्यूज़, हिंदी समाचार, ताजा खबरें, राजनीति, खेल, मनोरंजन, व्यापार, तकनीक, लाइव न्यूज़, OD News"
+        ogTitle="OD News - भारत की सबसे तेज़ समाचार वेबसाइट"
+        ogDescription="भारत की अग्रणी समाचार वेबसाइट। सच्ची और निष्पक्ष पत्रकारिता के साथ 24x7 ताजा समाचार।"
+      />
       <Header />
 
       {/* Main Content Container with Fixed Sidebars */}
@@ -19,7 +27,7 @@ export default function Home() {
           <div className="flex gap-6">
             {/* Fixed Left Sidebar */}
             <div className="hidden lg:block w-80 flex-shrink-0">
-              <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
+              <div className="sticky top-24">
                 <LeftSidebar />
               </div>
             </div>
@@ -30,7 +38,7 @@ export default function Home() {
               
               {/* Fixed Right Sidebar */}
               <div className="hidden lg:block w-80 flex-shrink-0">
-                <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
+                <div className="sticky top-24">
                   <RightSidebar />
                 </div>
               </div>
