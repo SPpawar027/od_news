@@ -11,7 +11,11 @@ import {
   Thermometer,
   Droplets,
   Eye,
-  MapPin
+  MapPin,
+  Star,
+  Heart,
+  TrendingUp,
+  Users
 } from "lucide-react";
 
 interface WeatherData {
@@ -24,8 +28,19 @@ interface WeatherData {
   icon: string;
 }
 
+interface RashifalData {
+  sign: string;
+  signHindi: string;
+  prediction: string;
+  love: number;
+  career: number;
+  health: number;
+  finance: number;
+}
+
 export default function RightSidebar() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [todayRashifal, setTodayRashifal] = useState<RashifalData | null>(null);
   const { data: trendingArticles = [] } = useQuery<Article[]>({
     queryKey: ["/api/trending-articles"],
   });
@@ -53,6 +68,35 @@ export default function RightSidebar() {
       windSpeed: randomCity.wind,
       visibility: randomCity.visibility,
       icon: randomCity.condition.toLowerCase()
+    });
+
+    // Generate daily rashifal
+    const zodiacSigns = [
+      { sign: "Aries", hindi: "मेष", predictions: ["आज आपके लिए शुभ दिन है। नए काम शुरू करने का अच्छा समय।", "धन लाभ की संभावना है। परिवार के साथ समय बिताएं।"] },
+      { sign: "Taurus", hindi: "वृषभ", predictions: ["आर्थिक मामलों में सावधानी बरतें। स्वास्थ्य का ध्यान रखें।", "प्रेम संबंधों में मधुरता आएगी। काम में सफलता मिलेगी।"] },
+      { sign: "Gemini", hindi: "मिथुन", predictions: ["संवाद में सावधानी रखें। मित्रों से सहायता मिल सकती है।", "नए अवसर आपका इंतजार कर रहे हैं। सकारात्मक रहें।"] },
+      { sign: "Cancer", hindi: "कर्क", predictions: ["पारिवारिक मामलों में खुशी होगी। धन की आवक बढ़ेगी।", "स्वास्थ्य में सुधार दिखेगा। यात्रा का योग है।"] },
+      { sign: "Leo", hindi: "सिंह", predictions: ["आत्मविश्वास बढ़ेगा। नेतृत्व के गुण उजागर होंगे।", "करियर में प्रगति की संभावना। शुभ समाचार मिल सकते हैं।"] },
+      { sign: "Virgo", hindi: "कन्या", predictions: ["कार्यक्षेत्र में मेहनत रंग लाएगी। सेहत का ख्याल रखें।", "छोटी यात्रा लाभकारी होगी। पढ़ाई में मन लगेगा।"] },
+      { sign: "Libra", hindi: "तुला", predictions: ["रिश्तों में संतुलन बनाए रखें। कला क्षेत्र में रुचि बढ़ेगी।", "व्यापार में फायदा होगा। न्याय आपके साथ होगा।"] },
+      { sign: "Scorpio", hindi: "वृश्चिक", predictions: ["गुप्त रूप से कोई योजना सफल होगी। रहस्यमय लाभ मिलेगा।", "जासूसी कार्यों में सफलता। आध्यात्म में रुचि बढ़ेगी।"] },
+      { sign: "Sagittarius", hindi: "धनु", predictions: ["दूर की यात्रा शुभ होगी। उच्च शिक्षा में सफलता मिलेगी।", "धर्म कार्यों में भाग लेने का योग। भाग्य साथ देगा।"] },
+      { sign: "Capricorn", hindi: "मकर", predictions: ["मेहनत का फल मिलेगा। व्यावसायिक क्षेत्र में प्रगति।", "अनुशासन से सफलता मिलेगी। बुजुर्गों का आशीर्वाद प्राप्त होगा।"] },
+      { sign: "Aquarius", hindi: "कुंभ", predictions: ["नवाचार में सफलता मिलेगी। मित्र मंडली का साथ मिलेगा।", "तकनीकी क्षेत्र में लाभ होगा। सामाजिक कार्यों में भाग लें।"] },
+      { sign: "Pisces", hindi: "मीन", predictions: ["कल्पना शक्ति बढ़ेगी। कलात्मक कार्यों में सफलता।", "आध्यात्मिक यात्रा का योग। मानसिक शांति मिलेगी।"] }
+    ];
+
+    const todaySign = zodiacSigns[new Date().getDate() % zodiacSigns.length];
+    const randomPrediction = todaySign.predictions[Math.floor(Math.random() * todaySign.predictions.length)];
+    
+    setTodayRashifal({
+      sign: todaySign.sign,
+      signHindi: todaySign.hindi,
+      prediction: randomPrediction,
+      love: Math.floor(Math.random() * 5) + 1,
+      career: Math.floor(Math.random() * 5) + 1,
+      health: Math.floor(Math.random() * 5) + 1,
+      finance: Math.floor(Math.random() * 5) + 1
     });
   }, []);
 
@@ -110,23 +154,126 @@ export default function RightSidebar() {
         </div>
       )}
 
-      {/* Google Ad Space */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
-        <div 
-          className="bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center m-4 rounded-lg"
-          style={{ 
-            width: LAYOUT_CONFIG.ad.google.width, 
-            height: LAYOUT_CONFIG.ad.google.height 
-          }}
-        >
-          <div className="text-center text-gray-500">
-            <div className="text-base font-semibold">Advertisement</div>
-            <div className="text-sm">
-              {LAYOUT_CONFIG.ad.google.width} × {LAYOUT_CONFIG.ad.google.height}
+      {/* Daily Rashifal */}
+      {todayRashifal && (
+        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg mb-6 p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Star className="w-5 h-5" />
+              <span className="font-bold text-lg font-hindi">आज का राशिफल</span>
+            </div>
+            <div className="text-xs opacity-80">
+              {new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'short' })}
+            </div>
+          </div>
+          
+          <div className="text-center mb-4">
+            <div className="text-2xl font-bold font-hindi">{todayRashifal.signHindi}</div>
+            <div className="text-sm opacity-80">{todayRashifal.sign}</div>
+          </div>
+          
+          <div className="text-sm leading-relaxed mb-4 font-hindi bg-white bg-opacity-20 rounded-lg p-3">
+            {todayRashifal.prediction}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="flex items-center justify-between bg-white bg-opacity-20 rounded-lg p-2">
+              <div className="flex items-center space-x-1">
+                <Heart className="w-3 h-3" />
+                <span className="font-hindi">प्रेम</span>
+              </div>
+              <div className="flex space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-3 h-3 ${i < todayRashifal.love ? 'fill-yellow-300' : 'opacity-30'}`} />
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between bg-white bg-opacity-20 rounded-lg p-2">
+              <div className="flex items-center space-x-1">
+                <TrendingUp className="w-3 h-3" />
+                <span className="font-hindi">करियर</span>
+              </div>
+              <div className="flex space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-3 h-3 ${i < todayRashifal.career ? 'fill-yellow-300' : 'opacity-30'}`} />
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between bg-white bg-opacity-20 rounded-lg p-2">
+              <div className="flex items-center space-x-1">
+                <Thermometer className="w-3 h-3" />
+                <span className="font-hindi">स्वास्थ्य</span>
+              </div>
+              <div className="flex space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-3 h-3 ${i < todayRashifal.health ? 'fill-yellow-300' : 'opacity-30'}`} />
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between bg-white bg-opacity-20 rounded-lg p-2">
+              <div className="flex items-center space-x-1">
+                <Users className="w-3 h-3" />
+                <span className="font-hindi">धन</span>
+              </div>
+              <div className="flex space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-3 h-3 ${i < todayRashifal.finance ? 'fill-yellow-300' : 'opacity-30'}`} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Advertisement Space */}
+      {sidebarAds.length > 0 ? (
+        sidebarAds.map((ad) => (
+          <div key={ad.id} className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
+            <div className="p-3">
+              <div className="text-xs text-gray-500 mb-2 text-center">विज्ञापन</div>
+              {ad.linkUrl ? (
+                <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <img 
+                    src={ad.imageUrl || ''} 
+                    alt={ad.title}
+                    className="w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
+                    style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
+                  />
+                  <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center">{ad.title}</h4>
+                </a>
+              ) : (
+                <div>
+                  <img 
+                    src={ad.imageUrl || ''} 
+                    alt={ad.title}
+                    className="w-full h-auto rounded-lg"
+                    style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
+                  />
+                  <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center">{ad.title}</h4>
+                </div>
+              )}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
+          <div 
+            className="bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center m-4 rounded-lg"
+            style={{ 
+              width: 300, 
+              height: 250 
+            }}
+          >
+            <div className="text-center text-gray-500">
+              <div className="text-base font-semibold">Advertisement</div>
+              <div className="text-sm">342 × 399</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Trending News */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
