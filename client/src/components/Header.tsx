@@ -60,14 +60,14 @@ export default function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 lg:space-x-4">
             {/* Google Login Account Button */}
             <Link
               href="/account"
-              className="flex items-center space-x-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-1 lg:space-x-2 bg-white border border-gray-300 rounded-lg px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <User className="w-4 h-4" />
-              <span>Account</span>
+              <span className="hidden sm:inline">Account</span>
             </Link>
 
             {/* Date/Time Display */}

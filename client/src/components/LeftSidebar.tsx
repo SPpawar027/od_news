@@ -114,7 +114,7 @@ export default function LeftSidebar() {
   }
 
   return (
-    <aside className="flex-shrink-0" style={{ width: LAYOUT_CONFIG.sidebar.left.width }}>
+    <aside className="flex-shrink-0 hidden lg:block" style={{ width: LAYOUT_CONFIG.sidebar.left.width }}>
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
         <h3 className="text-xl font-bold text-gray-900 mb-6 font-hindi">समाचार श्रेणियां</h3>
         <nav className="space-y-3">

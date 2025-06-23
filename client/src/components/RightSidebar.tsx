@@ -114,7 +114,7 @@ export default function RightSidebar() {
   };
 
   return (
-    <aside className="flex-shrink-0" style={{ width: LAYOUT_CONFIG.sidebar.right.width }}>
+    <aside className="flex-shrink-0 hidden lg:block" style={{ width: LAYOUT_CONFIG.sidebar.right.width }}>
       {/* Weather Widget */}
       {weather && (
         <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg mb-6 p-6 text-white">

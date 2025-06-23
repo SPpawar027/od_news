@@ -80,9 +80,9 @@ export default function MainContent() {
   const regularArticles = allArticles.slice(1);
 
   return (
-    <main className="flex-1" style={{ maxWidth: LAYOUT_CONFIG.content.main.width }}>
+    <main className="flex-1 lg:max-w-none" style={{ maxWidth: LAYOUT_CONFIG.content.main.width }}>
       <section className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 font-hindi border-b-2 border-red-600 pb-2">
+        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6 font-hindi border-b-2 border-red-600 pb-2">
           मुख्य समाचार
         </h2>
         
@@ -94,10 +94,10 @@ export default function MainContent() {
           />
         )}
 
-        <div className="grid gap-6">
+        <div className="grid gap-4 lg:gap-6">
           {regularArticles.map((article, index) => (
             <div
-              key={article.id}
+              key={`regular-${article.id}-${index}`}
               ref={index === regularArticles.length - 1 ? lastArticleRef : null}
             >
               <NewsCard 

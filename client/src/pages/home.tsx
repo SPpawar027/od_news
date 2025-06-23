@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import LeftSidebar from "@/components/LeftSidebar";
 import MainContent from "@/components/MainContent";
 import RightSidebar from "@/components/RightSidebar";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 
 export default function Home() {
@@ -10,13 +11,18 @@ export default function Home() {
       <Header />
 
       {/* Main Content Container */}
-      <div className="mx-auto px-4 py-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
+      <div className="mx-auto px-4 py-6 pb-20 lg:pb-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
         <div className="flex gap-6">
           <LeftSidebar />
-          <MainContent />
-          <RightSidebar />
+          <div className="flex-1 lg:flex lg:gap-6">
+            <MainContent />
+            <RightSidebar />
+          </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white mt-12">
