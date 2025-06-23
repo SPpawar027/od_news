@@ -48,13 +48,7 @@ const navigation = [
     icon: Video,
     description: "Entertainment Section"
   },
-  {
-    name: "Breaking News",
-    href: "/admin/breaking-news",
-    icon: Zap,
-    description: "Breaking News Ticker",
-    badge: "URGENT"
-  },
+
   {
     name: "RSS Feeds",
     href: "/admin/rss",

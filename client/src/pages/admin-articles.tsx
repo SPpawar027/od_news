@@ -14,10 +14,10 @@ export default function AdminArticlesPage() {
           <div className="max-w-7xl mx-auto">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Content Management System
+                समाचार प्रबंधन प्रणाली
               </h1>
               <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Create, edit, and manage news articles with rich text editor
+                समाचार लेख बनाएं, संपादित करें और प्रबंधित करें
               </p>
             </div>
 

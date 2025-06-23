@@ -400,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // RSS Sync functionality
+  // RSS Sync functionality - Disabled fake content generation
   app.post("/api/admin/rss-sources/:id/sync", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -410,68 +410,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "RSS source not found" });
       }
 
-      // Generate unique articles based on RSS source content type
-      const generateUniqueArticle = (index: number) => {
-        const timestamp = Date.now() + index * 1000;
-        const isEnglish = source.url.includes('english') || source.url.includes('EN') || source.name.toLowerCase().includes('english');
-        
-        if (isEnglish) {
-          return {
-            title: `Breaking News Update ${timestamp}`,
-            titleHindi: `ब्रेकिंग न्यूज़ अपडेट ${timestamp}`,
-            content: `This is a unique English news article generated from ${source.name} RSS feed. Content timestamp: ${timestamp}. This article contains important information relevant to the ${source.name} category.`,
-            contentHindi: `यह ${source.name} आरएसएस फीड से उत्पन्न एक अनोखा अंग्रेजी समाचार लेख है। सामग्री समयांक: ${timestamp}। इस लेख में ${source.name} श्रेणी से संबंधित महत्वपूर्ण जानकारी है।`,
-            excerpt: `Unique news from ${source.name} - ${timestamp}`,
-            excerptHindi: `${source.name} से अनोखी खबर - ${timestamp}`,
-            categoryId: source.categoryId,
-            authorName: source.name,
-            slug: `rss-${source.id}-${timestamp}`,
-            imageUrl: `https://picsum.photos/400/250?random=${timestamp}`,
-            publishedAt: new Date()
-          };
-        } else {
-          return {
-            title: `समाचार अपडेट ${timestamp}`,
-            titleHindi: `समाचार अपडेट ${timestamp}`,
-            content: `यह ${source.name} आरएसएस फीड से उत्पन्न एक अनोखा समाचार लेख है। सामग्री समयांक: ${timestamp}। इस लेख में ${source.name} श्रेणी से संबंधित महत्वपूर्ण जानकारी है।`,
-            contentHindi: `यह ${source.name} आरएसएस फीड से उत्पन्न एक अनोखा समाचार लेख है। सामग्री समयांक: ${timestamp}। इस लेख में ${source.name} श्रेणी से संबंधित महत्वपूर्ण जानकारी है।`,
-            excerpt: `${source.name} से अनोखी खबर - ${timestamp}`,
-            excerptHindi: `${source.name} से अनोखी खबर - ${timestamp}`,
-            categoryId: source.categoryId,
-            authorName: source.name,
-            slug: `rss-${source.id}-${timestamp}`,
-            imageUrl: `https://picsum.photos/400/250?random=${timestamp}`,
-            publishedAt: new Date()
-          };
-        }
-      };
-
-      // Create only one unique article per sync to avoid duplicates
-      const sampleArticles = [generateUniqueArticle(1)];
-
-      // Create articles from RSS feed
-      let articlesCreated = 0;
-      for (const articleData of sampleArticles) {
-        try {
-          await storage.createArticle(articleData);
-          articlesCreated++;
-        } catch (error) {
-          console.error("Failed to create RSS article:", error);
-        }
-      }
-      
-      // Update last fetch time and increment article count
-      const currentSource = await storage.getRssSourceById(id);
-      const totalImported = (currentSource?.articlesImported || 0) + articlesCreated;
-      
+      // Update last fetch time without creating fake articles
       await storage.updateRssSource(id, { 
-        lastFetch: new Date(),
-        articlesImported: totalImported
+        lastFetch: new Date()
       });
       
       res.json({ 
-        message: "RSS sync completed successfully",
-        articlesImported: articlesCreated,
+        message: "RSS sync completed - Real RSS integration needed for content import",
+        articlesImported: 0,
         lastFetch: new Date()
       });
     } catch (error) {

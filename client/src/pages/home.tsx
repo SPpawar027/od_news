@@ -1,5 +1,4 @@
 import Header from "@/components/Header";
-import BreakingNewsTicker from "@/components/BreakingNewsTicker";
 import LeftSidebar from "@/components/LeftSidebar";
 import MainContent from "@/components/MainContent";
 import RightSidebar from "@/components/RightSidebar";
@@ -27,8 +26,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      <BreakingNewsTicker />
 
       {/* Main Content Container */}
       <div className="mx-auto px-4 py-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
