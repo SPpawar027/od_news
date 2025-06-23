@@ -410,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "RSS source not found" });
       }
 
-      const Parser = require('rss-parser');
+      const { default: Parser } = await import('rss-parser');
       const parser = new Parser();
       
       let articlesImported = 0;
@@ -425,13 +425,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (!existingArticle) {
             const articleData = {
-              title: item.title,
-              titleHindi: item.title, // Use same title for Hindi
-              content: item.content || item.contentSnippet || item.summary || '',
-              contentHindi: item.content || item.contentSnippet || item.summary || '',
-              excerpt: item.contentSnippet?.substring(0, 200) || '',
-              excerptHindi: item.contentSnippet?.substring(0, 200) || '',
-              imageUrl: item.enclosure?.url || item.image?.url || '',
+              title: item.title || 'Untitled',
+              titleHindi: item.title || 'शीर्षक नहीं',
+              content: item.content || item.contentSnippet || item.summary || 'No content available',
+              contentHindi: item.content || item.contentSnippet || item.summary || 'सामग्री उपलब्ध नहीं',
+              excerpt: (item.contentSnippet || item.content || '').substring(0, 200) || 'No excerpt',
+              excerptHindi: (item.contentSnippet || item.content || '').substring(0, 200) || 'कोई सारांश नहीं',
+              imageUrl: item.enclosure?.url || item.image?.url || null,
               authorName: item.creator || source.name || 'RSS Feed',
               categoryId: source.categoryId || 1,
               isBreaking: false,

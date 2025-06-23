@@ -50,6 +50,23 @@ export default function AdminAdsPage() {
     queryKey: ["/api/admin/advertisements"],
   });
 
+  const [selectedPosition, setSelectedPosition] = useState<string>("sidebar");
+
+  const getDefaultSizeForPosition = (position: string) => {
+    switch (position) {
+      case "header":
+        return { width: 1892, height: 257 };
+      case "sidebar":
+        return { width: 342, height: 399 };
+      case "footer":
+        return { width: 1200, height: 200 };
+      case "content":
+        return { width: 728, height: 90 };
+      default:
+        return { width: 300, height: 250 };
+    }
+  };
+
   const form = useForm<AdvertisementForm>({
     resolver: zodResolver(advertisementSchema),
     defaultValues: {
@@ -57,8 +74,8 @@ export default function AdminAdsPage() {
       imageUrl: "",
       linkUrl: "",
       position: "sidebar",
-      width: 300,
-      height: 250,
+      width: 342,
+      height: 399,
       isActive: true,
     },
   });
@@ -264,13 +281,25 @@ export default function AdminAdsPage() {
                             <FormItem>
                               <FormLabel>Position</FormLabel>
                               <FormControl>
-                                <select className="w-full p-2 border rounded-md" {...field}>
-                                  <option value="sidebar">Sidebar</option>
-                                  <option value="header">Header</option>
-                                  <option value="footer">Footer</option>
-                                  <option value="content">Content</option>
+                                <select 
+                                  className="w-full p-2 border rounded-md" 
+                                  {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e.target.value);
+                                    const sizes = getDefaultSizeForPosition(e.target.value);
+                                    form.setValue("width", sizes.width);
+                                    form.setValue("height", sizes.height);
+                                  }}
+                                >
+                                  <option value="sidebar">Sidebar (342px × 399px)</option>
+                                  <option value="header">Header Large Banner (1892px × 257px)</option>
+                                  <option value="footer">Footer Banner (1200px × 200px)</option>
+                                  <option value="content">Content Banner (728px × 90px)</option>
                                 </select>
                               </FormControl>
+                              <FormDescription>
+                                Dimensions will auto-update based on position selection
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}

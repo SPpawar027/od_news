@@ -1,9 +1,16 @@
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import DateTimeDisplay from "./DateTimeDisplay";
 import { LAYOUT_CONFIG } from "@/lib/constants";
+import type { Advertisement } from "@shared/schema";
 
 export default function Header() {
   const [location] = useLocation();
+
+  const { data: headerAds = [] } = useQuery<Advertisement[]>({
+    queryKey: ["/api/advertisements", { position: "header" }],
+    queryFn: () => fetch("/api/advertisements?position=header").then(res => res.json()),
+  });
 
   const navItems = [
     { path: "/", label: "Home" },
@@ -52,6 +59,48 @@ export default function Header() {
           </div>
         </div>
       </div>
+      
+      {/* Header Advertisement Banner */}
+      {headerAds.length > 0 && (
+        <div className="bg-gray-50 border-t border-gray-200">
+          <div className="mx-auto px-4 py-3" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
+            <div className="text-center">
+              {headerAds.map((ad) => (
+                <div key={ad.id} className="inline-block">
+                  <div className="text-xs text-gray-500 mb-1">विज्ञापन</div>
+                  {ad.linkUrl ? (
+                    <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                      <img 
+                        src={ad.imageUrl || ''} 
+                        alt={ad.title}
+                        className="mx-auto rounded-lg hover:opacity-90 transition-opacity"
+                        style={{ 
+                          maxWidth: Math.min(ad.width || 1892, 1892), 
+                          maxHeight: ad.height || 257,
+                          width: 'auto',
+                          height: 'auto'
+                        }}
+                      />
+                    </a>
+                  ) : (
+                    <img 
+                      src={ad.imageUrl} 
+                      alt={ad.title}
+                      className="mx-auto rounded-lg"
+                      style={{ 
+                        maxWidth: Math.min(ad.width || 1892, 1892), 
+                        maxHeight: ad.height || 257,
+                        width: 'auto',
+                        height: 'auto'
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
