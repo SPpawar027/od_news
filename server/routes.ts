@@ -424,6 +424,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           
           if (!existingArticle) {
+            // Enhanced image extraction from RSS feeds
+            let imageUrl = null;
+            
+            // Try multiple sources for images
+            if (item.enclosure?.url && item.enclosure.type?.includes('image')) {
+              imageUrl = item.enclosure.url;
+            } else if (item.image?.url) {
+              imageUrl = item.image.url;
+            } else if (item['media:content']?.$ && item['media:content'].$.url) {
+              imageUrl = item['media:content'].$.url;
+            } else if (item['media:thumbnail']?.$ && item['media:thumbnail'].$.url) {
+              imageUrl = item['media:thumbnail'].$.url;
+            } else if (item.content || item.contentSnippet) {
+              // Extract image from content using regex
+              const content = item.content || item.contentSnippet || '';
+              const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
+              if (imgMatch && imgMatch[1]) {
+                imageUrl = imgMatch[1];
+              }
+            }
+            
             const articleData = {
               title: item.title || 'Untitled',
               titleHindi: item.title || 'शीर्षक नहीं',
@@ -431,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               contentHindi: item.content || item.contentSnippet || item.summary || 'सामग्री उपलब्ध नहीं',
               excerpt: (item.contentSnippet || item.content || '').substring(0, 200) || 'No excerpt',
               excerptHindi: (item.contentSnippet || item.content || '').substring(0, 200) || 'कोई सारांश नहीं',
-              imageUrl: item.enclosure?.url || item.image?.url || null,
+              imageUrl: imageUrl,
               authorName: item.creator || source.name || 'RSS Feed',
               categoryId: source.categoryId || 1,
               isBreaking: false,

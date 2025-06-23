@@ -84,7 +84,7 @@ export default function Header() {
                     </a>
                   ) : (
                     <img 
-                      src={ad.imageUrl} 
+                      src={ad.imageUrl || ''} 
                       alt={ad.title}
                       className="mx-auto rounded-lg"
                       style={{ 

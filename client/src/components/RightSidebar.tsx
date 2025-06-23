@@ -181,7 +181,7 @@ export default function RightSidebar() {
                 {ad.linkUrl ? (
                   <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
                     <img 
-                      src={ad.imageUrl} 
+                      src={ad.imageUrl || ''} 
                       alt={ad.title}
                       className="w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
                       style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
@@ -191,7 +191,7 @@ export default function RightSidebar() {
                 ) : (
                   <div>
                     <img 
-                      src={ad.imageUrl} 
+                      src={ad.imageUrl || ''} 
                       alt={ad.title}
                       className="w-full h-auto rounded-lg"
                       style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
