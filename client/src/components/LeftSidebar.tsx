@@ -2,16 +2,22 @@ import { useQuery } from "@tanstack/react-query";
 import type { Category } from "@shared/schema";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 import { 
-  Newspaper, 
+  Home,
   TrendingUp, 
   Zap, 
   Trophy, 
-  Globe, 
+  Globe2, 
   Briefcase, 
   Heart, 
   Gamepad2,
-  Music,
-  Camera
+  Music2,
+  Camera,
+  Star,
+  Target,
+  Shield,
+  Sparkles,
+  Activity,
+  Newspaper
 } from "lucide-react";
 
 const getCategoryIcon = (categoryTitle: string) => {
@@ -21,25 +27,67 @@ const getCategoryIcon = (categoryTitle: string) => {
   if (title.includes('business') || title.includes('finance')) return Briefcase;
   if (title.includes('tech') || title.includes('science')) return Zap;
   if (title.includes('health')) return Heart;
-  if (title.includes('entertainment') || title.includes('celebrity')) return Music;
-  if (title.includes('world') || title.includes('international')) return Globe;
-  if (title.includes('politics')) return TrendingUp;
+  if (title.includes('entertainment') || title.includes('celebrity')) return Music2;
+  if (title.includes('world') || title.includes('international')) return Globe2;
+  if (title.includes('politics')) return Target;
   if (title.includes('gaming')) return Gamepad2;
-  return Camera; // Default icon
+  if (title.includes('breaking')) return Activity;
+  if (title.includes('trending')) return Sparkles;
+  return Star; // Default icon
 };
 
-const getIconColor = (categoryTitle: string) => {
+const getIconStyles = (categoryTitle: string) => {
   const title = categoryTitle.toLowerCase();
-  if (title.includes('news') || title.includes('top')) return 'text-blue-500';
-  if (title.includes('sport')) return 'text-green-500';
-  if (title.includes('business')) return 'text-purple-500';
-  if (title.includes('tech')) return 'text-yellow-500';
-  if (title.includes('health')) return 'text-red-500';
-  if (title.includes('entertainment')) return 'text-pink-500';
-  if (title.includes('world')) return 'text-indigo-500';
-  if (title.includes('politics')) return 'text-orange-500';
-  if (title.includes('gaming')) return 'text-cyan-500';
-  return 'text-gray-500';
+  if (title.includes('news') || title.includes('top')) return {
+    iconColor: 'text-blue-600',
+    bgGradient: 'from-blue-50 to-blue-100',
+    hoverBg: 'group-hover:from-blue-100 group-hover:to-blue-200'
+  };
+  if (title.includes('sport')) return {
+    iconColor: 'text-emerald-600',
+    bgGradient: 'from-emerald-50 to-emerald-100',
+    hoverBg: 'group-hover:from-emerald-100 group-hover:to-emerald-200'
+  };
+  if (title.includes('business')) return {
+    iconColor: 'text-violet-600',
+    bgGradient: 'from-violet-50 to-violet-100',
+    hoverBg: 'group-hover:from-violet-100 group-hover:to-violet-200'
+  };
+  if (title.includes('tech')) return {
+    iconColor: 'text-amber-600',
+    bgGradient: 'from-amber-50 to-amber-100',
+    hoverBg: 'group-hover:from-amber-100 group-hover:to-amber-200'
+  };
+  if (title.includes('health')) return {
+    iconColor: 'text-rose-600',
+    bgGradient: 'from-rose-50 to-rose-100',
+    hoverBg: 'group-hover:from-rose-100 group-hover:to-rose-200'
+  };
+  if (title.includes('entertainment')) return {
+    iconColor: 'text-pink-600',
+    bgGradient: 'from-pink-50 to-pink-100',
+    hoverBg: 'group-hover:from-pink-100 group-hover:to-pink-200'
+  };
+  if (title.includes('world')) return {
+    iconColor: 'text-indigo-600',
+    bgGradient: 'from-indigo-50 to-indigo-100',
+    hoverBg: 'group-hover:from-indigo-100 group-hover:to-indigo-200'
+  };
+  if (title.includes('politics')) return {
+    iconColor: 'text-orange-600',
+    bgGradient: 'from-orange-50 to-orange-100',
+    hoverBg: 'group-hover:from-orange-100 group-hover:to-orange-200'
+  };
+  if (title.includes('gaming')) return {
+    iconColor: 'text-cyan-600',
+    bgGradient: 'from-cyan-50 to-cyan-100',
+    hoverBg: 'group-hover:from-cyan-100 group-hover:to-cyan-200'
+  };
+  return {
+    iconColor: 'text-slate-600',
+    bgGradient: 'from-slate-50 to-slate-100',
+    hoverBg: 'group-hover:from-slate-100 group-hover:to-slate-200'
+  };
 };
 
 export default function LeftSidebar() {
@@ -72,21 +120,19 @@ export default function LeftSidebar() {
         <nav className="space-y-3">
           {categories.map((category) => {
             const IconComponent = getCategoryIcon(category.title);
-            const iconColor = getIconColor(category.title);
+            const iconStyles = getIconStyles(category.title);
             
             return (
               <a 
                 key={category.id}
                 href={`/category/${category.slug}`} 
-                className="flex items-center space-x-4 p-3 rounded-2xl hover:bg-gray-50 transition-all duration-200 group"
+                className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-300 group"
               >
                 <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
-                    <IconComponent className={`w-6 h-6 ${iconColor}`} />
+                  <div className={`w-12 h-12 bg-gradient-to-br ${iconStyles.bgGradient} ${iconStyles.hoverBg} rounded-xl flex items-center justify-center shadow-md border border-gray-200 transform group-hover:scale-105 group-hover:shadow-lg transition-all duration-300`}>
+                    <IconComponent className={`w-6 h-6 ${iconStyles.iconColor} group-hover:scale-110 transition-transform duration-300`} />
                   </div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">•</span>
-                  </div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full opacity-75 animate-pulse"></div>
                 </div>
                 <div className="flex-1">
                   <span className="font-semibold text-gray-800 group-hover:text-red-600 transition-colors font-hindi text-sm">
