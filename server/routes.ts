@@ -157,6 +157,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // RSS Articles API (public) - Articles imported from RSS feeds
+  app.get("/api/rss-articles", async (req, res) => {
+    try {
+      const { categoryId, limit = 20, offset = 0 } = req.query;
+      const allArticles = await storage.getArticles(100, 0, categoryId ? Number(categoryId) : undefined);
+      
+      // Filter articles that were imported from RSS (identify by characteristics)
+      const rssArticles = allArticles.filter(article => 
+        // Articles with RSS-like author names or very long titles typical of RSS feeds
+        article.authorName === 'National' ||
+        article.authorName === 'RSS Feed' ||
+        article.title.length > 80 ||
+        article.title.includes(':') ||
+        article.content.includes('\n') ||
+        // Recent articles (likely from RSS auto-sync)
+        (article.createdAt && new Date(article.createdAt).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000)) // Last 7 days
+      );
+
+      const paginatedArticles = rssArticles
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(Number(offset), Number(offset) + Number(limit));
+        
+      res.json(paginatedArticles);
+    } catch (error) {
+      console.error("RSS articles fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch RSS articles" });
+    }
+  });
+
   // Articles API
   app.get("/api/articles", async (req, res) => {
     try {

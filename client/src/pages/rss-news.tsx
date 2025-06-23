@@ -19,29 +19,33 @@ export default function RSSNewsPage() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: articles = [] } = useQuery<Article[]>({
-    queryKey: ["/api/articles"],
-  });
-
-  const { data: rssSources = [] } = useQuery<RssSource[]>({
-    queryKey: ["/api/rss-sources"],
-  });
-
   // Find the current category
   const currentCategory = categories.find(cat => 
     cat.title.toLowerCase().replace(/\s+/g, '-') === categorySlug ||
     cat.titleHindi === categorySlug
   );
 
+  const { data: articles = [] } = useQuery<Article[]>({
+    queryKey: ["/api/rss-articles", currentCategory?.id],
+    queryFn: () => 
+      fetch(`/api/rss-articles${currentCategory ? `?categoryId=${currentCategory.id}` : ''}`)
+        .then(res => res.json()),
+    enabled: !!categories.length, // Only run when categories are loaded
+  });
+
+  const { data: rssSources = [] } = useQuery<RssSource[]>({
+    queryKey: ["/api/rss-sources"],
+  });
+
   // Filter RSS sources for current category
   const categoryRSSSources = rssSources.filter(source => 
     source.isActive && source.categoryId === currentCategory?.id
   );
 
-  // Filter articles for current category (simulating RSS-imported articles)
-  const categoryArticles = articles.filter(article => 
-    article.categoryId === currentCategory?.id
-  );
+  // All RSS articles are already filtered by the API
+  const categoryArticles = currentCategory 
+    ? articles.filter(article => article.categoryId === currentCategory.id)
+    : articles;
 
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
