@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Article } from "@shared/schema";
+import type { Article, Advertisement } from "@shared/schema";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 import { 
   Cloud, 
@@ -28,6 +28,11 @@ export default function RightSidebar() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const { data: trendingArticles = [] } = useQuery<Article[]>({
     queryKey: ["/api/trending-articles"],
+  });
+
+  const { data: sidebarAds = [] } = useQuery<Advertisement[]>({
+    queryKey: ["/api/advertisements", { position: "sidebar" }],
+    queryFn: () => fetch("/api/advertisements?position=sidebar").then(res => res.json()),
   });
 
   useEffect(() => {
@@ -165,6 +170,40 @@ export default function RightSidebar() {
           </div>
         </div>
       </div>
+
+      {/* Advertisements */}
+      {sidebarAds.length > 0 && (
+        <div className="mb-6 space-y-4">
+          {sidebarAds.map((ad) => (
+            <div key={ad.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="p-3">
+                <div className="text-xs text-gray-500 mb-2 text-center">विज्ञापन</div>
+                {ad.linkUrl ? (
+                  <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <img 
+                      src={ad.imageUrl} 
+                      alt={ad.title}
+                      className="w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
+                      style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
+                    />
+                    <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center">{ad.title}</h4>
+                  </a>
+                ) : (
+                  <div>
+                    <img 
+                      src={ad.imageUrl} 
+                      alt={ad.title}
+                      className="w-full h-auto rounded-lg"
+                      style={{ maxWidth: ad.width || 300, maxHeight: ad.height || 250 }}
+                    />
+                    <h4 className="text-sm font-semibold text-gray-900 mt-2 text-center">{ad.title}</h4>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Social Media */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">

@@ -91,6 +91,12 @@ export default function NewsCard({ article, category, featured = false }: NewsCa
             <p className="text-gray-600 text-sm font-hindi leading-relaxed line-clamp-2">
               {article.excerptHindi}
             </p>
+            {article.authorName && (
+              <div className="flex items-center mt-2 pt-2 border-t border-gray-100">
+                <span className="text-xs text-gray-500">लेखक:</span>
+                <span className="text-xs text-gray-700 ml-1 font-medium">{article.authorName}</span>
+              </div>
+            )}
           </div>
         </div>
       </article>

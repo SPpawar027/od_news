@@ -400,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // RSS Sync functionality - Disabled fake content generation
+  // RSS Sync functionality - Real RSS feed parsing
   app.post("/api/admin/rss-sources/:id/sync", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -410,19 +410,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "RSS source not found" });
       }
 
-      // Update last fetch time without creating fake articles
+      const Parser = require('rss-parser');
+      const parser = new Parser();
+      
+      let articlesImported = 0;
+      
+      try {
+        const feed = await parser.parseURL(source.url);
+        
+        for (const item of feed.items.slice(0, 5)) { // Import latest 5 articles
+          const existingArticle = await storage.getArticles(100, 0).then(articles => 
+            articles.find(a => a.title === item.title || a.titleHindi === item.title)
+          );
+          
+          if (!existingArticle) {
+            const articleData = {
+              title: item.title,
+              titleHindi: item.title, // Use same title for Hindi
+              content: item.content || item.contentSnippet || item.summary || '',
+              contentHindi: item.content || item.contentSnippet || item.summary || '',
+              excerpt: item.contentSnippet?.substring(0, 200) || '',
+              excerptHindi: item.contentSnippet?.substring(0, 200) || '',
+              imageUrl: item.enclosure?.url || item.image?.url || '',
+              authorName: item.creator || source.name || 'RSS Feed',
+              categoryId: source.categoryId || 1,
+              isBreaking: false,
+              isTrending: false,
+              publishedAt: item.pubDate ? new Date(item.pubDate) : new Date()
+            };
+            
+            await storage.createArticle(articleData);
+            articlesImported++;
+          }
+        }
+      } catch (rssError) {
+        console.error("RSS parsing error:", rssError);
+        await storage.updateRssSource(id, { 
+          lastFetch: new Date()
+        });
+        
+        return res.json({ 
+          message: "RSS sync completed - Unable to parse feed content",
+          articlesImported: 0,
+          lastFetch: new Date()
+        });
+      }
+
+      // Update source with new fetch time and imported count
       await storage.updateRssSource(id, { 
-        lastFetch: new Date()
+        lastFetch: new Date(),
+        articlesImported: (source.articlesImported || 0) + articlesImported
       });
       
       res.json({ 
-        message: "RSS sync completed - Real RSS integration needed for content import",
-        articlesImported: 0,
+        message: `RSS sync completed successfully`,
+        articlesImported,
         lastFetch: new Date()
       });
     } catch (error) {
       console.error("RSS sync error:", error);
-      res.status(500).json({ error: "Failed to sync RSS source", details: error.message });
+      res.status(500).json({ error: "Failed to sync RSS source", details: (error as Error).message });
     }
   });
 
@@ -574,6 +621,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Advertisement deletion error:", error);
       res.status(500).json({ error: "Failed to delete advertisement", details: error.message });
+    }
+  });
+
+  // Public Advertisement API
+  app.get("/api/advertisements", async (req, res) => {
+    try {
+      const { position } = req.query;
+      const advertisements = await storage.getAdvertisements();
+      const activeAds = advertisements.filter(ad => ad.isActive);
+      
+      if (position) {
+        const filteredAds = activeAds.filter(ad => ad.position === position);
+        res.json(filteredAds);
+      } else {
+        res.json(activeAds);
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch advertisements" });
+    }
+  });
+
+  // File Upload API
+  const { default: multer } = await import('multer');
+  const { default: path } = await import('path');
+  const { default: express } = await import('express');
+  
+  const uploadStorage = multer.diskStorage({
+    destination: function (req: any, file: any, cb: any) {
+      cb(null, 'uploads/');
+    },
+    filename: function (req: any, file: any, cb: any) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({ 
+    storage: uploadStorage,
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req: any, file: any, cb: any) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed!'), false);
+      }
+    }
+  });
+
+  app.post("/api/upload", authenticateAdmin, upload.single('file'), (req: any, res: any) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const fileUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: fileUrl });
+    } catch (error) {
+      res.status(500).json({ error: "File upload failed" });
+    }
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+  // Password Reset with Telegram OTP
+  const { default: TelegramBot } = await import('node-telegram-bot-api');
+  const otpStorage = new Map(); // Temporary OTP storage
+
+  app.post("/api/admin/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      const user = await storage.getAdminUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store OTP with expiration (5 minutes)
+      otpStorage.set(email, {
+        otp,
+        expiresAt: Date.now() + 5 * 60 * 1000,
+        userId: user.id
+      });
+
+      // Send OTP via Telegram (requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+      if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+        try {
+          const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+          await bot.sendMessage(process.env.TELEGRAM_CHAT_ID, 
+            `🔐 OD News Password Reset\n\nOTP for ${email}: ${otp}\n\nValid for 5 minutes only.`
+          );
+        } catch (telegramError) {
+          console.error("Telegram error:", telegramError);
+          return res.status(500).json({ error: "Failed to send OTP via Telegram" });
+        }
+      } else {
+        console.log(`OTP for ${email}: ${otp}`); // Fallback for development
+      }
+
+      res.json({ message: "OTP sent to Telegram" });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ error: "Failed to process password reset request" });
+    }
+  });
+
+  app.post("/api/admin/verify-otp", async (req, res) => {
+    try {
+      const { email, otp, newPassword } = req.body;
+      
+      if (!email || !otp || !newPassword) {
+        return res.status(400).json({ error: "Email, OTP, and new password are required" });
+      }
+
+      const otpData = otpStorage.get(email);
+      if (!otpData) {
+        return res.status(400).json({ error: "Invalid or expired OTP" });
+      }
+
+      if (Date.now() > otpData.expiresAt) {
+        otpStorage.delete(email);
+        return res.status(400).json({ error: "OTP has expired" });
+      }
+
+      if (otpData.otp !== otp) {
+        return res.status(400).json({ error: "Invalid OTP" });
+      }
+
+      // Update password
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateAdminUser(otpData.userId, { password: hashedPassword });
+      
+      // Clear OTP
+      otpStorage.delete(email);
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("OTP verification error:", error);
+      res.status(500).json({ error: "Failed to verify OTP" });
     }
   });
 
