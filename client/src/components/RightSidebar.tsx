@@ -42,7 +42,8 @@ export default function RightSidebar() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [todayRashifal, setTodayRashifal] = useState<RashifalData | null>(null);
   const { data: trendingArticles = [] } = useQuery<Article[]>({
-    queryKey: ["/api/trending-articles"],
+    queryKey: ["/api/articles", { categoryId: 1, limit: 5 }],
+    queryFn: () => fetch("/api/articles?categoryId=1&limit=5").then(res => res.json()),
   });
 
   const { data: sidebarAds = [] } = useQuery<Advertisement[]>({
@@ -279,10 +280,14 @@ export default function RightSidebar() {
         </div>
       )}
 
-      {/* Trending News */}
+      {/* Top News */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-xl font-bold text-gray-900 font-hindi">ट्रेंडिंग न्यूज़</h3>
+          <div className="flex items-center space-x-2">
+            <TrendingUp className="w-5 h-5 text-red-600" />
+            <h3 className="text-xl font-bold text-gray-900 font-hindi">टॉप न्यूज़</h3>
+          </div>
+          <p className="text-sm text-gray-600 mt-1 font-hindi">मुख्य समाचार से जुड़े ट्रेंडिंग विषय</p>
         </div>
         <div className="p-6">
           <div className="space-y-4">
