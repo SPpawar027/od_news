@@ -469,6 +469,71 @@ export default function RightSidebar() {
           </div>
         </div>
       </div>
+
+      {/* Footer Section */}
+      <div className="bg-gray-900 rounded-xl shadow-lg border border-gray-200 text-white">
+        <div className="p-6">
+          {/* Company Links */}
+          <div className="space-y-4 mb-6">
+            <h3 className="text-lg font-bold text-white font-hindi">कंपनी</h3>
+            <div className="grid grid-cols-1 gap-2 text-sm">
+              <a href="/advertise" className="text-gray-300 hover:text-white transition-colors">
+                Advertise with Us
+              </a>
+              <a href="/od-reporter" className="text-gray-300 hover:text-white transition-colors">
+                OD Reporter
+              </a>
+              <a href="/terms" className="text-gray-300 hover:text-white transition-colors">
+                Terms & Conditions
+              </a>
+              <a href="/grievance" className="text-gray-300 hover:text-white transition-colors">
+                Grievance Redressal Policy
+              </a>
+              <a href="/contact" className="text-gray-300 hover:text-white transition-colors">
+                Contact Us
+              </a>
+              <a href="/cookie-policy" className="text-gray-300 hover:text-white transition-colors">
+                Cookie Policy
+              </a>
+              <a href="/privacy" className="text-gray-300 hover:text-white transition-colors">
+                Privacy Policy
+              </a>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="space-y-3 mb-6 border-t border-gray-700 pt-6">
+            <h4 className="text-md font-semibold text-white">Contact Information</h4>
+            <div className="text-sm text-gray-300 space-y-2">
+              <div className="flex flex-col space-y-1">
+                <span className="text-gray-400">Phone:</span>
+                <a href="tel:+919993820711" className="hover:text-white transition-colors">
+                  +91 99938 20711
+                </a>
+                <a href="tel:+918818882105" className="hover:text-white transition-colors">
+                  +91 88188 82105
+                </a>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <span className="text-gray-400">Email:</span>
+                <a href="mailto:contact@ODnews.com" className="hover:text-white transition-colors">
+                  contact@ODnews.com
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Copyright and Ethics */}
+          <div className="border-t border-gray-700 pt-4 space-y-3">
+            <p className="text-xs text-gray-400">
+              Copyright © 2024-25 OD Pvt. Ltd., All Rights Reserved.
+            </p>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              This website follows the DNPA Code of Ethics to ensure ethical digital news publishing and responsible journalism.
+            </p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
