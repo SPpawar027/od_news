@@ -33,6 +33,8 @@ import { eq, desc } from "drizzle-orm";
 export interface IStorage {
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, updates: Partial<Category>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
   
   getArticles(limit?: number, offset?: number, categoryId?: number): Promise<Article[]>;
   getArticleById(id: number): Promise<Article | undefined>;
@@ -335,6 +337,19 @@ export class DatabaseStorage implements IStorage {
       .values(insertCategory)
       .returning();
     return category;
+  }
+
+  async updateCategory(id: number, updates: Partial<Category>): Promise<Category> {
+    const [category] = await db
+      .update(categories)
+      .set(updates)
+      .where(eq(categories.id, id))
+      .returning();
+    return category;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
   }
 
   async getArticles(limit = 10, offset = 0, categoryId?: number): Promise<Article[]> {

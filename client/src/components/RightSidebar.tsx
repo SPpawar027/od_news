@@ -86,13 +86,17 @@ export default function RightSidebar() {
       { sign: "Pisces", hindi: "मीन", predictions: ["कल्पना शक्ति बढ़ेगी। कलात्मक कार्यों में सफलता।", "आध्यात्मिक यात्रा का योग। मानसिक शांति मिलेगी।"] }
     ];
 
-    const todaySign = zodiacSigns[new Date().getDate() % zodiacSigns.length];
-    const randomPrediction = todaySign.predictions[Math.floor(Math.random() * todaySign.predictions.length)];
+    // Rotate zodiac sign based on date and hour for variety
+    const today = new Date();
+    const signIndex = (today.getDate() + Math.floor(today.getHours() / 2)) % zodiacSigns.length;
+    const todaySign = zodiacSigns[signIndex];
+    const predictionIndex = today.getHours() % todaySign.predictions.length;
+    const todayPrediction = todaySign.predictions[predictionIndex];
     
     setTodayRashifal({
       sign: todaySign.sign,
       signHindi: todaySign.hindi,
-      prediction: randomPrediction,
+      prediction: todayPrediction,
       love: Math.floor(Math.random() * 5) + 1,
       career: Math.floor(Math.random() * 5) + 1,
       health: Math.floor(Math.random() * 5) + 1,

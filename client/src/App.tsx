@@ -21,6 +21,7 @@ import AdminRSSPage from "@/pages/admin-rss";
 import AdminUsersPage from "@/pages/admin-users";
 import AdminForgotPasswordPage from "@/pages/admin-forgot-password";
 import AdminAdsPage from "@/pages/admin-ads";
+import AdminCategoriesPage from "@/pages/admin-categories";
 
 function Router() {
   return (
@@ -40,7 +41,7 @@ function Router() {
       <Route path="/admin/live-tv" component={AdminLiveTVPage} />
       <Route path="/admin/videos" component={AdminVideosPage} />
       <Route path="/admin/rss" component={AdminRSSPage} />
-
+      <Route path="/admin/categories" component={AdminCategoriesPage} />
       <Route path="/admin/ads" component={AdminAdsPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/*" component={AdminDashboard} />

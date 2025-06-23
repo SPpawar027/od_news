@@ -26,6 +26,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { seedDatabase } = await import('./seedData');
   await seedDatabase();
 
+  // RSS Auto-sync - Run every 15 minutes
+  const RSS_SYNC_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
+  
+  async function autoSyncRssFeeds() {
+    try {
+      console.log("Starting automatic RSS sync...");
+      const sources = await storage.getRssSources();
+      const activeSources = sources.filter(source => source.isActive);
+      
+      for (const source of activeSources) {
+        try {
+          const { default: Parser } = await import('rss-parser');
+          const parser = new Parser();
+          const feed = await parser.parseURL(source.url);
+          
+          let articlesImported = 0;
+          for (const item of feed.items.slice(0, 3)) { // Import latest 3 articles per source
+            const existingArticle = await storage.getArticles(100, 0).then(articles => 
+              articles.find(a => a.title === item.title || a.titleHindi === item.title)
+            );
+            
+            if (!existingArticle) {
+              // Enhanced image extraction
+              let imageUrl = null;
+              if (item.enclosure?.url && item.enclosure.type?.includes('image')) {
+                imageUrl = item.enclosure.url;
+              } else if (item.image?.url) {
+                imageUrl = item.image.url;
+              } else if (item.content || item.contentSnippet) {
+                const content = item.content || item.contentSnippet || '';
+                const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
+                if (imgMatch && imgMatch[1]) {
+                  imageUrl = imgMatch[1];
+                }
+              }
+              
+              const articleData = {
+                title: item.title || 'Untitled',
+                titleHindi: item.title || 'शीर्षक नहीं',
+                content: item.content || item.contentSnippet || item.summary || 'No content available',
+                contentHindi: item.content || item.contentSnippet || item.summary || 'सामग्री उपलब्ध नहीं',
+                excerpt: (item.contentSnippet || item.content || '').substring(0, 200) || 'No excerpt',
+                excerptHindi: (item.contentSnippet || item.content || '').substring(0, 200) || 'कोई सारांश नहीं',
+                imageUrl: imageUrl,
+                authorName: item.creator || source.name || 'RSS Feed',
+                categoryId: source.categoryId || 1,
+                isBreaking: false,
+                isTrending: false,
+                publishedAt: item.pubDate ? new Date(item.pubDate) : new Date()
+              };
+              
+              await storage.createArticle(articleData);
+              articlesImported++;
+            }
+          }
+          
+          await storage.updateRssSource(source.id, { 
+            lastFetch: new Date(),
+            articlesImported: (source.articlesImported || 0) + articlesImported
+          });
+          
+          if (articlesImported > 0) {
+            console.log(`Auto-sync: Imported ${articlesImported} articles from ${source.name}`);
+          }
+        } catch (error) {
+          console.error(`Auto-sync error for ${source.name}:`, error);
+        }
+      }
+      console.log("Automatic RSS sync completed");
+    } catch (error) {
+      console.error("Auto-sync error:", error);
+    }
+  }
+  
+  // Start auto-sync immediately and then every 15 minutes
+  autoSyncRssFeeds();
+  setInterval(autoSyncRssFeeds, RSS_SYNC_INTERVAL);
+
 
 
   // Categories API
@@ -35,6 +113,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  // Admin Category Management
+  app.get("/api/admin/categories", authenticateAdmin, async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/admin/categories", authenticateAdmin, requireRole(["manager"]), async (req, res) => {
+    try {
+      const categoryData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create category" });
+    }
+  });
+
+  app.put("/api/admin/categories/:id", authenticateAdmin, requireRole(["manager"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const category = await storage.updateCategory(id, updates);
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", authenticateAdmin, requireRole(["manager"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCategory(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete category" });
     }
   });
 
