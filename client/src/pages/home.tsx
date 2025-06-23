@@ -13,24 +13,26 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 font-hindi">
       <Header />
 
-      {/* Main Content Container */}
-      <div className="mx-auto px-4 py-6 pb-20 lg:pb-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
-        <div className="flex gap-6 transition-all duration-300 ease-in-out">
-          <div className={`transition-all duration-500 ease-in-out hidden lg:block ${
-            sidebarVisible ? 'opacity-100 translate-x-0 w-80' : 'opacity-0 -translate-x-full w-0'
-          }`}>
-            <LeftSidebar />
-          </div>
-          
-          <div className={`flex-1 transition-all duration-300 ease-in-out ${
-            sidebarVisible ? 'lg:max-w-none' : 'lg:max-w-full'
-          }`}>
-            <div className="lg:flex lg:gap-6">
+      {/* Main Content Container with Fixed Sidebars */}
+      <div className="relative">
+        <div className="mx-auto px-4 py-6 pb-20 lg:pb-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
+          <div className="flex gap-6">
+            {/* Fixed Left Sidebar */}
+            <div className="hidden lg:block w-80 flex-shrink-0">
+              <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
+                <LeftSidebar />
+              </div>
+            </div>
+            
+            {/* Main Content Area */}
+            <div className="flex-1 lg:flex lg:gap-6">
               <MainContent />
-              <div className={`transition-all duration-500 ease-in-out hidden lg:block ${
-                sidebarVisible ? 'opacity-100 translate-x-0 w-80' : 'opacity-0 translate-x-full w-0'
-              }`}>
-                <RightSidebar />
+              
+              {/* Fixed Right Sidebar */}
+              <div className="hidden lg:block w-80 flex-shrink-0">
+                <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
+                  <RightSidebar />
+                </div>
               </div>
             </div>
           </div>
