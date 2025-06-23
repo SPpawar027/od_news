@@ -69,9 +69,17 @@ export default function RSSManagement() {
     },
     onSuccess: (data, id) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/rss-sources"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
       // Show success message with article count
-      if (data.articlesImported) {
-        alert(`Sync completed! Imported ${data.articlesImported} new articles.`);
+      if (data && data.articlesImported !== undefined) {
+        if (data.articlesImported > 0) {
+          alert(`RSS sync successful! Imported ${data.articlesImported} new articles.`);
+        } else {
+          alert('RSS sync completed. No new articles found.');
+        }
+      } else {
+        alert('RSS sync completed successfully.');
       }
     },
     onError: (error) => {

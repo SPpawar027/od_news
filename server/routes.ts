@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Enhanced image extraction from RSS feeds
             let imageUrl = null;
             
-            // Try multiple sources for images
+            // Try multiple sources for images with enhanced extraction
             if (item.enclosure?.url && item.enclosure.type?.includes('image')) {
               imageUrl = item.enclosure.url;
             } else if (item.image?.url) {
@@ -437,12 +437,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else if (item['media:thumbnail']?.$ && item['media:thumbnail'].$.url) {
               imageUrl = item['media:thumbnail'].$.url;
             } else if (item.content || item.contentSnippet) {
-              // Extract image from content using regex
+              // Extract image from content using multiple regex patterns
               const content = item.content || item.contentSnippet || '';
-              const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
-              if (imgMatch && imgMatch[1]) {
-                imageUrl = imgMatch[1];
+              
+              // Try different image extraction patterns
+              const imgPatterns = [
+                /<img[^>]+src=["']([^"'>]+)["'][^>]*>/i,
+                /<img[^>]*src=["']([^"'>]+)["'][^>]*>/i,
+                /src=["']([^"'>]*\.(jpg|jpeg|png|gif|webp)[^"']*)["']/i,
+                /https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp)/i
+              ];
+              
+              for (const pattern of imgPatterns) {
+                const match = content.match(pattern);
+                if (match && match[1]) {
+                  imageUrl = match[1];
+                  break;
+                }
               }
+            } else if (item.itunes?.image) {
+              imageUrl = item.itunes.image;
+            } else if (item.guid && typeof item.guid === 'object' && (item.guid as any)._) {
+              // Some feeds put image URLs in GUID
+              const guidStr = (item.guid as any)._;
+              if (guidStr.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                imageUrl = guidStr;
+              }
+            }
+            
+            // Clean up relative URLs and make them absolute
+            if (imageUrl && imageUrl.startsWith('//')) {
+              imageUrl = 'https:' + imageUrl;
+            } else if (imageUrl && imageUrl.startsWith('/')) {
+              const baseUrl = new URL(source.url).origin;
+              imageUrl = baseUrl + imageUrl;
             }
             
             const articleData = {
