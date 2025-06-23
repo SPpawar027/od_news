@@ -191,13 +191,26 @@ export default function LiveTVPage() {
                         allow="autoplay; encrypted-media; fullscreen"
                       />
                     ) : selectedStream.url ? (
-                      <iframe
-                        src={selectedStream.url}
-                        className="w-full h-full"
-                        allowFullScreen
-                        title={`${selectedStream.nameHindi} Live Stream`}
-                        allow="autoplay; encrypted-media; fullscreen"
-                      />
+                      // Convert YouTube URLs to embed format
+                      (() => {
+                        let embedUrl = selectedStream.url;
+                        if (selectedStream.url.includes('youtube.com/watch?v=')) {
+                          const videoId = selectedStream.url.split('v=')[1]?.split('&')[0];
+                          embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+                        } else if (selectedStream.url.includes('youtu.be/')) {
+                          const videoId = selectedStream.url.split('youtu.be/')[1]?.split('?')[0];
+                          embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+                        }
+                        return (
+                          <iframe
+                            src={embedUrl}
+                            className="w-full h-full"
+                            allowFullScreen
+                            title={`${selectedStream.nameHindi} Live Stream`}
+                            allow="autoplay; encrypted-media; fullscreen"
+                          />
+                        );
+                      })()
                     ) : (
                       /* HLS Video Player */
                       <video

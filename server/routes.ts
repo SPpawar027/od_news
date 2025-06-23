@@ -9,7 +9,8 @@ import {
   insertLiveStreamSchema,
   insertVideoSchema,
   insertRssSourceSchema,
-  insertArticleDraftSchema
+  insertArticleDraftSchema,
+  insertAdvertisementSchema
 } from "@shared/schema";
 import { 
   authenticateAdmin, 
@@ -579,8 +580,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newsData = insertBreakingNewsSchema.parse(req.body);
       const news = await storage.createBreakingNews(newsData);
       res.status(201).json(news);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create breaking news" });
+    } catch (error: any) {
+      console.error("Breaking news creation error:", error);
+      res.status(500).json({ error: "Failed to create breaking news", details: error.message });
+    }
+  });
+
+  // Advertisement Management
+  app.get("/api/admin/advertisements", authenticateAdmin, async (req, res) => {
+    try {
+      const ads = await storage.getAdvertisements();
+      res.json(ads);
+    } catch (error: any) {
+      console.error("Advertisement fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch advertisements", details: error.message });
+    }
+  });
+
+  app.post("/api/admin/advertisements", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
+    try {
+      const adData = insertAdvertisementSchema.parse(req.body);
+      const ad = await storage.createAdvertisement(adData);
+      res.status(201).json(ad);
+    } catch (error: any) {
+      console.error("Advertisement creation error:", error);
+      res.status(500).json({ error: "Failed to create advertisement", details: error.message });
+    }
+  });
+
+  app.put("/api/admin/advertisements/:id", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const ad = await storage.updateAdvertisement(id, updates);
+      res.json(ad);
+    } catch (error: any) {
+      console.error("Advertisement update error:", error);
+      res.status(500).json({ error: "Failed to update advertisement", details: error.message });
+    }
+  });
+
+  app.delete("/api/admin/advertisements/:id", authenticateAdmin, requireRole(["manager", "editor"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteAdvertisement(id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Advertisement deletion error:", error);
+      res.status(500).json({ error: "Failed to delete advertisement", details: error.message });
     }
   });
 

@@ -28,7 +28,7 @@ import {
   type InsertAdvertisement,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -139,8 +139,10 @@ export class MemStorage implements IStorage {
       const breakingNews: BreakingNews = { 
         ...news, 
         createdAt: news.createdAt || new Date(),
+        content: null,
         priority: news.priority || 1,
-        isActive: news.isActive || true
+        isActive: news.isActive || true,
+        expiresAt: null
       };
       this.breakingNewsItems.set(news.id, breakingNews);
     });
@@ -312,8 +314,10 @@ export class MemStorage implements IStorage {
       ...insertBreakingNews, 
       id, 
       createdAt: new Date(),
-      priority: insertBreakingNews.priority || 1,
-      isActive: insertBreakingNews.isActive || true
+      content: insertBreakingNews.content ?? null,
+      priority: insertBreakingNews.priority ?? 1,
+      isActive: insertBreakingNews.isActive ?? true,
+      expiresAt: insertBreakingNews.expiresAt ?? null
     };
     this.breakingNewsItems.set(id, news);
     return news;
@@ -370,7 +374,14 @@ export class DatabaseStorage implements IStorage {
   async createBreakingNews(insertBreakingNews: InsertBreakingNews): Promise<BreakingNews> {
     const [news] = await db
       .insert(breakingNews)
-      .values(insertBreakingNews)
+      .values({
+        title: insertBreakingNews.title,
+        titleHindi: insertBreakingNews.titleHindi,
+        content: insertBreakingNews.content || null,
+        priority: insertBreakingNews.priority || 1,
+        isActive: insertBreakingNews.isActive ?? true,
+        expiresAt: insertBreakingNews.expiresAt || null
+      })
       .returning();
     return news;
   }

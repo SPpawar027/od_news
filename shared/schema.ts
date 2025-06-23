@@ -54,8 +54,10 @@ export const breakingNews = pgTable("breaking_news", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   titleHindi: text("title_hindi").notNull(),
+  content: text("content"),
   priority: integer("priority").default(1),
   isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
