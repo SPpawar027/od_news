@@ -344,7 +344,7 @@ export class DatabaseStorage implements IStorage {
       query = query.where(eq(articles.categoryId, categoryId));
     }
     
-    return await query.limit(limit).offset(offset);
+    return await query.orderBy(desc(articles.createdAt)).limit(limit).offset(offset) as Article[];
   }
 
   async getArticleById(id: number): Promise<Article | undefined> {

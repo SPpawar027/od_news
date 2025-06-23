@@ -130,15 +130,14 @@ export const videos = pgTable("videos", {
 export const advertisements = pgTable("advertisements", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  imageUrl: text("image_url").notNull(),
-  linkUrl: text("link_url"),
+  imageUrl: text("imageurl"),
+  linkUrl: text("linkurl"),
   position: text("position").notNull(), // 'sidebar', 'header', 'footer', 'content'
-  isActive: boolean("is_active").default(true),
+  isActive: boolean("isactive").default(true),
   width: integer("width").default(300),
   height: integer("height").default(250),
-  createdBy: integer("created_by").references(() => adminUsers.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("createdat").defaultNow(),
+  updatedAt: timestamp("updatedat").defaultNow(),
 });
 
 // Article drafts and status
