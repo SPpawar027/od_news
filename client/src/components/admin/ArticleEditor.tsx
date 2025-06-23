@@ -20,12 +20,9 @@ interface ArticleEditorProps {
 
 export default function ArticleEditor({ article, onClose, onSave }: ArticleEditorProps) {
   const [formData, setFormData] = useState({
-    title: article?.title || "",
     titleHindi: article?.titleHindi || "",
-    content: article?.content || "",
-    contentHindi: article?.contentHindi || "",
-    excerpt: article?.excerpt || "",
     excerptHindi: article?.excerptHindi || "",
+    contentHindi: article?.contentHindi || "",
     imageUrl: article?.imageUrl || "",
     authorName: article?.authorName || "",
     categoryId: article?.categoryId || null,
@@ -53,29 +50,38 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Add required fields for backend compatibility
+      const articleData = {
+        ...data,
+        title: data.titleHindi, // Use Hindi title as main title
+        content: data.contentHindi, // Use Hindi content as main content
+        excerpt: data.excerptHindi, // Use Hindi excerpt as main excerpt
+      };
+      
       if (article) {
         return apiRequest(`/api/admin/articles/${article.id}`, {
           method: "PUT",
-          body: JSON.stringify(data),
+          body: JSON.stringify(articleData),
         });
       } else {
         return apiRequest("/api/admin/articles", {
           method: "POST",
-          body: JSON.stringify(data),
+          body: JSON.stringify(articleData),
         });
       }
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: `Article ${article ? "updated" : "created"} successfully`,
+        title: "सफलता",
+        description: `लेख ${article ? "अपडेट" : "बनाया गया"} सफलतापूर्वक`,
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
       onSave();
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save article",
+        title: "त्रुटि",
+        description: error.message || "लेख सेव करने में विफल",
         variant: "destructive",
       });
     },
@@ -92,14 +98,14 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
         onSuccess: (response: any) => {
           handleInputChange("imageUrl", response.url);
           toast({
-            title: "Success",
-            description: "Image uploaded successfully",
+            title: "सफलता",
+            description: "छवि अपलोड सफल",
           });
         },
         onError: () => {
           toast({
-            title: "Error",
-            description: "Failed to upload image",
+            title: "त्रुटि",
+            description: "छवि अपलोड विफल",
             variant: "destructive",
           });
         },
@@ -108,10 +114,10 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
   };
 
   const handleSave = () => {
-    if (!formData.title || !formData.content) {
+    if (!formData.titleHindi || !formData.contentHindi) {
       toast({
-        title: "Error",
-        description: "Title and content are required",
+        title: "त्रुटि",
+        description: "शीर्षक और सामग्री आवश्यक है",
         variant: "destructive",
       });
       return;
@@ -125,8 +131,8 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
       window.open(`/article/${article.id}`, '_blank');
     } else {
       toast({
-        title: "Info",
-        description: "Please save the article first to preview it",
+        title: "जानकारी",
+        description: "कृपया पहले लेख सेव करें",
       });
     }
   };
@@ -138,16 +144,16 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={onClose}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            वापस
           </Button>
           <h1 className="text-2xl font-bold">
-            {article ? "Edit Article" : "Create New Article"}
+            {article ? "लेख संपादित करें" : "नया लेख बनाएं"}
           </h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handlePreview}>
             <Eye className="w-4 h-4 mr-2" />
-            Preview
+            पूर्वावलोकन
           </Button>
           <Button 
             onClick={handleSave}
@@ -155,7 +161,7 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
             className="bg-red-600 hover:bg-red-700"
           >
             <Save className="w-4 h-4 mr-2" />
-            {saveMutation.isPending ? "Saving..." : "Save Article"}
+            {saveMutation.isPending ? "सेव हो रहा है..." : "लेख सेव करें"}
           </Button>
         </div>
       </div>
@@ -165,67 +171,36 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Article Content</CardTitle>
+              <CardTitle>लेख सामग्री</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Title (English)</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange("title", e.target.value)}
-                    placeholder="Enter article title..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="titleHindi">Title (Hindi)</Label>
-                  <Input
-                    id="titleHindi"
-                    value={formData.titleHindi}
-                    onChange={(e) => handleInputChange("titleHindi", e.target.value)}
-                    placeholder="लेख का शीर्षक दर्ज करें..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="excerpt">Excerpt (English)</Label>
-                  <Textarea
-                    id="excerpt"
-                    value={formData.excerpt}
-                    onChange={(e) => handleInputChange("excerpt", e.target.value)}
-                    placeholder="Brief description..."
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="excerptHindi">Excerpt (Hindi)</Label>
-                  <Textarea
-                    id="excerptHindi"
-                    value={formData.excerptHindi}
-                    onChange={(e) => handleInputChange("excerptHindi", e.target.value)}
-                    placeholder="संक्षिप्त विवरण..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-
+              {/* Title in Hindi */}
               <div>
-                <Label htmlFor="content">Content (English)</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => handleInputChange("content", e.target.value)}
-                  placeholder="Write your article content here..."
-                  rows={12}
-                  className="font-mono"
+                <Label htmlFor="titleHindi">शीर्षक (Title in Hindi)</Label>
+                <Input
+                  id="titleHindi"
+                  value={formData.titleHindi}
+                  onChange={(e) => handleInputChange("titleHindi", e.target.value)}
+                  placeholder="लेख का शीर्षक दर्ज करें..."
+                  className="text-lg"
                 />
               </div>
 
+              {/* Excerpt in Hindi */}
               <div>
-                <Label htmlFor="contentHindi">Content (Hindi)</Label>
+                <Label htmlFor="excerptHindi">सारांश (Excerpt Hindi)</Label>
+                <Textarea
+                  id="excerptHindi"
+                  value={formData.excerptHindi}
+                  onChange={(e) => handleInputChange("excerptHindi", e.target.value)}
+                  placeholder="संक्षिप्त विवरण..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Content in Hindi */}
+              <div>
+                <Label htmlFor="contentHindi">सामग्री (Content Hindi)</Label>
                 <Textarea
                   id="contentHindi"
                   value={formData.contentHindi}
@@ -241,108 +216,116 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Category */}
           <Card>
             <CardHeader>
-              <CardTitle>Article Settings</CardTitle>
+              <CardTitle>श्रेणी</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <div>
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={formData.categoryId?.toString() || ""} 
-                  onValueChange={(value) => handleInputChange("categoryId", parseInt(value) || null)}
-                >
+                <Label htmlFor="category">Select Category</Label>
+                <Select value={formData.categoryId?.toString() || ""} onValueChange={(value) => handleInputChange("categoryId", parseInt(value))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="श्रेणी चुनें..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category: Category) => (
+                    {(categories as Category[]).map((category: Category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.title}
+                        {category.titleHindi || category.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            </CardContent>
+          </Card>
 
+          {/* Author */}
+          <Card>
+            <CardHeader>
+              <CardTitle>लेखक</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div>
                 <Label htmlFor="authorName">Author Name</Label>
                 <Input
                   id="authorName"
-                  value={formData.authorName || ""}
+                  value={formData.authorName}
                   onChange={(e) => handleInputChange("authorName", e.target.value)}
                   placeholder="Author name..."
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="isBreaking">Breaking News</Label>
-                  <Switch
-                    id="isBreaking"
-                    checked={formData.isBreaking || false}
-                    onCheckedChange={(checked) => handleInputChange("isBreaking", checked)}
+          {/* Featured Image */}
+          <Card>
+            <CardHeader>
+              <CardTitle>फीचर्ड छवि</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="imageUrl">Featured Image</Label>
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={(e) => handleInputChange("imageUrl", e.target.value)}
+                  placeholder="Image URL only"
+                />
+              </div>
+              
+              {formData.imageUrl && (
+                <div className="mt-2">
+                  <img 
+                    src={formData.imageUrl} 
+                    alt="Preview" 
+                    className="w-full h-32 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="isTrending">Trending Article</Label>
-                  <Switch
-                    id="isTrending"
-                    checked={formData.isTrending || false}
-                    onCheckedChange={(checked) => handleInputChange("isTrending", checked)}
-                  />
-                </div>
+              )}
+
+              <div>
+                <Label htmlFor="imageUpload">या छवि अपलोड करें</Label>
+                <Input
+                  id="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadMutation.isPending}
+                />
+                {uploadMutation.isPending && (
+                  <p className="text-sm text-gray-500 mt-1">अपलोड हो रहा है...</p>
+                )}
               </div>
             </CardContent>
           </Card>
 
+          {/* Article Options */}
           <Card>
             <CardHeader>
-              <CardTitle>Featured Image</CardTitle>
+              <CardTitle>लेख विकल्प</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  value={formData.imageUrl || ""}
-                  onChange={(e) => handleInputChange("imageUrl", e.target.value)}
-                  placeholder="https://example.com/image.jpg"
+              <div className="flex items-center justify-between">
+                <Label htmlFor="isBreaking">Breaking News</Label>
+                <Switch
+                  id="isBreaking"
+                  checked={formData.isBreaking}
+                  onCheckedChange={(checked) => handleInputChange("isBreaking", checked)}
                 />
               </div>
-              
-              <div>
-                <Label htmlFor="imageUpload">Upload Image</Label>
-                <div className="mt-2">
-                  <input
-                    type="file"
-                    id="imageUpload"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => document.getElementById("imageUpload")?.click()}
-                    disabled={uploadMutation.isPending}
-                    className="w-full"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {uploadMutation.isPending ? "Uploading..." : "Choose File"}
-                  </Button>
-                </div>
-              </div>
 
-              {formData.imageUrl && (
-                <div>
-                  <Label>Preview</Label>
-                  <img
-                    src={formData.imageUrl}
-                    alt="Article preview"
-                    className="w-full h-32 object-cover rounded-md mt-2"
-                  />
-                </div>
-              )}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="isTrending">Trending Article</Label>
+                <Switch
+                  id="isTrending"
+                  checked={formData.isTrending}
+                  onCheckedChange={(checked) => handleInputChange("isTrending", checked)}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
