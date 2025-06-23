@@ -4,21 +4,47 @@ import MainContent from "@/components/MainContent";
 import RightSidebar from "@/components/RightSidebar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { LAYOUT_CONFIG } from "@/lib/constants";
+import { useScrollTrigger } from "@/hooks/use-scroll";
 
 export default function Home() {
+  const { sidebarVisible, isAtTop, scrollProgress } = useScrollTrigger(500);
+
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
       <Header />
 
       {/* Main Content Container */}
       <div className="mx-auto px-4 py-6 pb-20 lg:pb-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
-        <div className="flex gap-6">
-          <LeftSidebar />
-          <div className="flex-1 lg:flex lg:gap-6">
-            <MainContent />
-            <RightSidebar />
+        <div className="flex gap-6 transition-all duration-300 ease-in-out">
+          <div className={`transition-all duration-500 ease-in-out hidden lg:block ${
+            sidebarVisible ? 'opacity-100 translate-x-0 w-80' : 'opacity-0 -translate-x-full w-0'
+          }`}>
+            <LeftSidebar />
+          </div>
+          
+          <div className={`flex-1 transition-all duration-300 ease-in-out ${
+            sidebarVisible ? 'lg:max-w-none' : 'lg:max-w-full'
+          }`}>
+            <div className="lg:flex lg:gap-6">
+              <MainContent />
+              <div className={`transition-all duration-500 ease-in-out hidden lg:block ${
+                sidebarVisible ? 'opacity-100 translate-x-0 w-80' : 'opacity-0 translate-x-full w-0'
+              }`}>
+                <RightSidebar />
+              </div>
+            </div>
           </div>
         </div>
+        
+        {/* Scroll Progress Indicator */}
+        {!isAtTop && (
+          <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
+            <div 
+              className="h-full bg-red-600 transition-all duration-300"
+              style={{ width: `${scrollProgress * 100}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile Bottom Navigation */}
