@@ -3,7 +3,7 @@ import { useRoute } from "wouter";
 import { useState } from "react";
 import type { Article, Category } from "@shared/schema";
 import Header from "@/components/Header";
-import BreakingNewsTicker from "@/components/BreakingNewsTicker";
+
 import LeftSidebar from "@/components/LeftSidebar";
 import RightSidebar from "@/components/RightSidebar";
 import NewsCard from "@/components/NewsCard";
@@ -36,7 +36,6 @@ export default function CategoryPage() {
     return (
       <div className="min-h-screen bg-gray-50 font-hindi">
         <Header />
-        <BreakingNewsTicker />
         <div className="mx-auto px-4 py-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4 font-hindi">श्रेणी नहीं मिली</h1>
@@ -57,26 +56,6 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
       <Header />
-      
-      {/* Large Banner Advertisement */}
-      <div className="w-full bg-gray-100 flex justify-center py-4">
-        <div 
-          className="bg-white border-2 border-dashed border-gray-300 flex items-center justify-center"
-          style={{ 
-            width: LAYOUT_CONFIG.banner.width, 
-            height: LAYOUT_CONFIG.banner.height 
-          }}
-        >
-          <div className="text-center text-gray-500">
-            <div className="text-lg font-semibold">Large Banner Advertisement</div>
-            <div className="text-sm">
-              {LAYOUT_CONFIG.banner.width} × {LAYOUT_CONFIG.banner.height}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <BreakingNewsTicker />
 
       {/* Main Content Container */}
       <div className="mx-auto px-4 py-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import BreakingNewsTicker from "@/components/BreakingNewsTicker";
+
 import LeftSidebar from "@/components/LeftSidebar";
 import RightSidebar from "@/components/RightSidebar";
 import { LAYOUT_CONFIG } from "@/lib/constants";
@@ -36,7 +36,6 @@ export default function LiveTVPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
       <Header />
-      <BreakingNewsTicker />
       
       <div className="mx-auto px-4 py-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
         <div className="flex gap-6">

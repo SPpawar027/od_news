@@ -1,16 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { Article, Category } from "@shared/schema";
 import NewsCard from "./NewsCard";
-import { Button } from "@/components/ui/button";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 
 export default function MainContent() {
+  const [allArticles, setAllArticles] = useState<Article[]>([]);
   const [offset, setOffset] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const limit = 10;
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const { data: articles = [], isLoading } = useQuery<Article[]>({
     queryKey: ["/api/articles", { limit, offset }],
+    enabled: hasMore,
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -21,9 +25,39 @@ export default function MainContent() {
     return categories.find(cat => cat.id === id);
   };
 
-  const loadMore = () => {
-    setOffset(prev => prev + limit);
-  };
+  // Update allArticles when new data comes in
+  useEffect(() => {
+    if (articles.length > 0) {
+      if (offset === 0) {
+        setAllArticles(articles);
+      } else {
+        setAllArticles(prev => [...prev, ...articles]);
+      }
+      setIsLoadingMore(false);
+      
+      // Check if we have less articles than requested, meaning no more data
+      if (articles.length < limit) {
+        setHasMore(false);
+      }
+    }
+  }, [articles, offset, limit]);
+
+  // Infinite scroll observer
+  const lastArticleRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoading || isLoadingMore || !hasMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    if (node) {
+      observerRef.current = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          setIsLoadingMore(true);
+          setOffset(prev => prev + limit);
+        }
+      }, { threshold: 0.1 });
+      
+      observerRef.current.observe(node);
+    }
+  }, [isLoading, isLoadingMore, hasMore, limit]);
 
   if (isLoading && offset === 0) {
     return (
@@ -42,8 +76,8 @@ export default function MainContent() {
     );
   }
 
-  const featuredArticle = articles[0];
-  const regularArticles = articles.slice(1);
+  const featuredArticle = allArticles[0];
+  const regularArticles = allArticles.slice(1);
 
   return (
     <main className="flex-1" style={{ maxWidth: LAYOUT_CONFIG.content.main.width }}>
@@ -61,24 +95,45 @@ export default function MainContent() {
         )}
 
         <div className="grid gap-6">
-          {regularArticles.map((article) => (
-            <NewsCard 
-              key={article.id} 
-              article={article} 
-              category={getCategoryById(article.categoryId)} 
-            />
+          {regularArticles.map((article, index) => (
+            <div
+              key={article.id}
+              ref={index === regularArticles.length - 1 ? lastArticleRef : null}
+            >
+              <NewsCard 
+                article={article} 
+                category={getCategoryById(article.categoryId)} 
+              />
+            </div>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
-          <Button 
-            onClick={loadMore}
-            className="bg-red-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors font-hindi"
-            disabled={isLoading}
-          >
-            {isLoading ? "लोड हो रहा है..." : "और समाचार लोड करें"}
-          </Button>
-        </div>
+        {/* Loading indicator for infinite scroll */}
+        {isLoadingMore && (
+          <div className="mt-8 text-center">
+            <div className="animate-pulse">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex">
+                  <div className="w-32 h-24 bg-gray-200 rounded flex-shrink-0"></div>
+                  <div className="p-4 flex-1">
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* End of content indicator */}
+        {!hasMore && allArticles.length > 0 && (
+          <div className="mt-8 text-center py-6 border-t border-gray-200">
+            <p className="text-gray-500 font-hindi">सभी समाचार लोड हो गए</p>
+          </div>
+        )}
       </section>
     </main>
   );

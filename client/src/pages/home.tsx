@@ -8,24 +8,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
       <Header />
-      
-      {/* Large Banner Advertisement */}
-      <div className="w-full bg-gray-100 flex justify-center py-4">
-        <div 
-          className="bg-white border-2 border-dashed border-gray-300 flex items-center justify-center"
-          style={{ 
-            width: LAYOUT_CONFIG.banner.width, 
-            height: LAYOUT_CONFIG.banner.height 
-          }}
-        >
-          <div className="text-center text-gray-500">
-            <div className="text-lg font-semibold">Large Banner Advertisement</div>
-            <div className="text-sm">
-              {LAYOUT_CONFIG.banner.width} × {LAYOUT_CONFIG.banner.height}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Main Content Container */}
       <div className="mx-auto px-4 py-6" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
