@@ -67,34 +67,33 @@ export default function MobileBottomNav() {
     );
   }
 
-  // Show only top 5 categories for mobile
-  const topCategories = categories.slice(0, 5);
-
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-      <div className="flex justify-around items-center py-2">
-        {topCategories.map((category) => {
-          const IconComponent = getCategoryIcon(category.title);
-          const iconColor = getIconColor(category.title);
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex items-center py-2 px-2 gap-3 min-w-max">
+          {categories.map((category) => {
+            const IconComponent = getCategoryIcon(category.title);
+            const iconColor = getIconColor(category.title);
           
-          return (
-            <a 
-              key={category.id}
-              href={`/category/${category.slug}`} 
-              className="flex flex-col items-center p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 group"
-            >
-              <div className="relative">
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <IconComponent className={`w-5 h-5 ${iconColor} group-hover:scale-110 transition-transform duration-200`} />
+            return (
+              <a 
+                key={category.id}
+                href={`/category/${category.slug}`} 
+                className="flex flex-col items-center p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 group flex-shrink-0"
+              >
+                <div className="relative">
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <IconComponent className={`w-5 h-5 ${iconColor} group-hover:scale-110 transition-transform duration-200`} />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full opacity-75"></div>
                 </div>
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full opacity-75"></div>
-              </div>
-              <span className="text-xs text-gray-600 mt-1 font-hindi text-center leading-tight max-w-[60px] truncate">
-                {category.titleHindi}
-              </span>
-            </a>
-          );
-        })}
+                <span className="text-xs text-gray-600 mt-1 font-hindi text-center leading-tight max-w-[60px] truncate">
+                  {category.titleHindi}
+                </span>
+              </a>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
