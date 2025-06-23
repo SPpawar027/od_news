@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import DateTimeDisplay from "./DateTimeDisplay";
 import { LAYOUT_CONFIG } from "@/lib/constants";
 import type { Advertisement } from "@shared/schema";
-import { User, LogIn } from "lucide-react";
+import { User, LogIn, Home, Search, Video, Tv } from "lucide-react";
 
 export default function Header() {
   const [location] = useLocation();
@@ -31,15 +31,55 @@ export default function Header() {
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="mx-auto px-4" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
         <div className="flex items-center justify-between h-16">
-          {/* Logo Section */}
-          <div className="flex items-center space-x-4">
+          {/* Logo Section with Mobile Navigation */}
+          <div className="flex items-center space-x-2 md:space-x-4">
             <Link href="/" className="flex items-center">
-              <span className="text-3xl font-bold brand-red font-inter">OD</span>
-              <span className="text-3xl font-bold text-news-black font-inter ml-1">NEWS</span>
-              <span className="bg-brand-red text-white text-xs font-semibold px-2 py-1 rounded-full ml-2 animate-pulse-glow font-inter">
+              <span className="text-2xl md:text-3xl font-bold brand-red font-inter">OD</span>
+              <span className="text-2xl md:text-3xl font-bold text-news-black font-inter ml-1">NEWS</span>
+              <span className="bg-brand-red text-white text-xs font-semibold px-1 md:px-2 py-1 rounded-full ml-1 md:ml-2 animate-pulse-glow font-inter">
                 LIVE
               </span>
             </Link>
+            
+            {/* Mobile Navigation Buttons */}
+            <div className="flex md:hidden items-center space-x-1 ml-2">
+              <Link 
+                href="/" 
+                className={`p-2 rounded-lg transition-colors ${
+                  location === "/" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title="Home"
+              >
+                <Home className="w-4 h-4" />
+              </Link>
+              <Link 
+                href="/search" 
+                className={`p-2 rounded-lg transition-colors ${
+                  location === "/search" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title="Search"
+              >
+                <Search className="w-4 h-4" />
+              </Link>
+              <Link 
+                href="/live-tv" 
+                className={`p-2 rounded-lg transition-colors ${
+                  location === "/live-tv" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title="Live TV"
+              >
+                <Tv className="w-4 h-4" />
+              </Link>
+              <Link 
+                href="/videos" 
+                className={`p-2 rounded-lg transition-colors ${
+                  location === "/videos" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title="Videos"
+              >
+                <Video className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
           {/* Navigation */}
