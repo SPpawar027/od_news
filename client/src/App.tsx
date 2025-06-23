@@ -12,6 +12,13 @@ import VideosPage from "@/pages/videos";
 import RSSNewsPage from "@/pages/rss-news";
 import SearchPage from "@/pages/search";
 import AccountPage from "@/pages/account";
+import AdvertisePage from "@/pages/advertise";
+import ODReporterPage from "@/pages/od-reporter";
+import TermsPage from "@/pages/terms";
+import GrievancePage from "@/pages/grievance";
+import ContactPage from "@/pages/contact";
+import CookiePolicyPage from "@/pages/cookie-policy";
+import PrivacyPolicyPage from "@/pages/privacy";
 import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArticlesPage from "@/pages/admin-articles";
@@ -34,6 +41,13 @@ function Router() {
       <Route path="/rss-news/:category?" component={RSSNewsPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/account" component={AccountPage} />
+      <Route path="/advertise" component={AdvertisePage} />
+      <Route path="/od-reporter" component={ODReporterPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/grievance" component={GrievancePage} />
+      <Route path="/contact" component={ContactPage} />
+      <Route path="/cookie-policy" component={CookiePolicyPage} />
+      <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/forgot-password" component={AdminForgotPasswordPage} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
