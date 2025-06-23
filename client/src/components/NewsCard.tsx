@@ -32,12 +32,22 @@ export default function NewsCard({ article, category, featured = false }: NewsCa
     return (
       <Link href={`/article/${article.id}`}>
         <article className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
-          {article.imageUrl && (
+          {article.imageUrl ? (
             <img 
               src={article.imageUrl} 
               alt={article.titleHindi} 
               className="w-full h-64 object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
+          ) : (
+            <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <div className="text-2xl mb-2">📰</div>
+                <div className="text-sm font-hindi">समाचार</div>
+              </div>
+            </div>
           )}
           
           <div className="p-6">
@@ -68,12 +78,21 @@ export default function NewsCard({ article, category, featured = false }: NewsCa
     <Link href={`/article/${article.id}`}>
       <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
         <div className="flex">
-          {article.imageUrl && (
+          {article.imageUrl ? (
             <img 
               src={article.imageUrl} 
               alt={article.titleHindi} 
               className="w-32 h-24 object-cover flex-shrink-0"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
+          ) : (
+            <div className="w-32 h-24 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0">
+              <div className="text-center text-gray-500">
+                <div className="text-lg">📰</div>
+              </div>
+            </div>
           )}
           
           <div className="p-4 flex-1">

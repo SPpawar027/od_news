@@ -26,8 +26,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { seedDatabase } = await import('./seedData');
   await seedDatabase();
 
-  // RSS Auto-sync - Run every 15 minutes
-  const RSS_SYNC_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
+  // RSS Auto-sync - Run every 5 minutes for testing, then 15 minutes
+  const RSS_SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds for immediate testing
   
   async function autoSyncRssFeeds() {
     try {
@@ -48,18 +48,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
             
             if (!existingArticle) {
-              // Enhanced image extraction
+              // Enhanced image extraction with multiple fallbacks
               let imageUrl = null;
+              
+              // Try multiple image sources in order of preference
               if (item.enclosure?.url && item.enclosure.type?.includes('image')) {
                 imageUrl = item.enclosure.url;
               } else if (item.image?.url) {
                 imageUrl = item.image.url;
+              } else if (item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
+                imageUrl = item['media:content']['$'].url;
               } else if (item.content || item.contentSnippet) {
                 const content = item.content || item.contentSnippet || '';
-                const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
-                if (imgMatch && imgMatch[1]) {
-                  imageUrl = imgMatch[1];
+                // Multiple image extraction patterns
+                const imgPatterns = [
+                  /<img[^>]+src="([^">]+)"/i,
+                  /<img[^>]+src='([^'>]+)'/i,
+                  /src="([^"]*\.(jpg|jpeg|png|gif|webp)[^"]*)"/gi,
+                  /https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp)/gi
+                ];
+                
+                for (const pattern of imgPatterns) {
+                  const match = content.match(pattern);
+                  if (match && match[1]) {
+                    imageUrl = match[1];
+                    break;
+                  }
                 }
+              }
+              
+              // Keep imageUrl as null if no authentic image found
+              if (imageUrl && !imageUrl.startsWith('http')) {
+                imageUrl = null; // Ensure only valid URLs
               }
               
               const articleData = {
@@ -165,14 +185,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Filter articles that were imported from RSS (identify by characteristics)
       const rssArticles = allArticles.filter(article => 
-        // Articles with RSS-like author names or very long titles typical of RSS feeds
+        // Articles with RSS-like characteristics
         article.authorName === 'National' ||
         article.authorName === 'RSS Feed' ||
-        article.title.length > 80 ||
+        article.title.length > 50 ||
         article.title.includes(':') ||
         article.content.includes('\n') ||
-        // Recent articles (likely from RSS auto-sync)
-        (article.createdAt && new Date(article.createdAt).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000)) // Last 7 days
+        article.content.includes('\r') ||
+        // Articles created in the last 30 days (broader range for testing)
+        (article.createdAt && new Date(article.createdAt).getTime() > Date.now() - (30 * 24 * 60 * 60 * 1000))
       );
 
       const paginatedArticles = rssArticles

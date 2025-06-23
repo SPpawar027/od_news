@@ -2,8 +2,11 @@ import { db } from "./db";
 import { 
   categories, 
   articles, 
-  breakingNews
+  breakingNews,
+  rssSources,
+  adminUsers
 } from "@shared/schema";
+import { hashPassword } from "./adminAuth";
 
 export async function seedDatabase() {
   try {
@@ -136,6 +139,50 @@ export async function seedDatabase() {
     ];
 
     await db.insert(breakingNews).values(breakingNewsData).onConflictDoNothing();
+
+    // Seed RSS sources for testing
+    const rssSourceData = [
+      {
+        id: 1,
+        name: "Times of India",
+        url: "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
+        categoryId: 1,
+        isActive: true,
+        fetchInterval: 15
+      },
+      {
+        id: 2,
+        name: "NDTV News",
+        url: "http://feeds.feedburner.com/NDTV-LatestNews",
+        categoryId: 1,
+        isActive: true,
+        fetchInterval: 15
+      },
+      {
+        id: 3,
+        name: "Economic Times",
+        url: "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
+        categoryId: 2,
+        isActive: true,
+        fetchInterval: 20
+      }
+    ];
+
+    await db.insert(rssSources).values(rssSourceData).onConflictDoNothing();
+
+    // Seed admin user
+    const adminData = [
+      {
+        id: 1,
+        username: "admin",
+        email: "admin@odnews.com",
+        password: await hashPassword("admin123"),
+        role: "manager",
+        isActive: true
+      }
+    ];
+
+    await db.insert(adminUsers).values(adminData).onConflictDoNothing();
 
     console.log("Database seeded successfully!");
 

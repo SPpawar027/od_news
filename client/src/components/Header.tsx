@@ -7,10 +7,17 @@ import type { Advertisement } from "@shared/schema";
 export default function Header() {
   const [location] = useLocation();
 
-  const { data: headerAds = [] } = useQuery<Advertisement[]>({
-    queryKey: ["/api/advertisements", { position: "header" }],
-    queryFn: () => fetch("/api/advertisements?position=header").then(res => res.json()),
-  });
+  // Static header advertisement (1892px × 257px)
+  const staticHeaderAd = {
+    id: 1,
+    title: "Google Ads - Header Banner",
+    imageUrl: "https://via.placeholder.com/1892x257/FF6B35/FFFFFF?text=Google+Ads+Header+Banner+1892x257",
+    linkUrl: "https://ads.google.com",
+    position: "header",
+    isActive: true,
+    width: 1892,
+    height: 257
+  };
 
   const navItems = [
     { path: "/", label: "Home" },
@@ -60,47 +67,29 @@ export default function Header() {
         </div>
       </div>
       
-      {/* Header Advertisement Banner */}
-      {headerAds.length > 0 && (
-        <div className="bg-gray-50 border-t border-gray-200">
-          <div className="mx-auto px-4 py-3" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
-            <div className="text-center">
-              {headerAds.map((ad) => (
-                <div key={ad.id} className="inline-block">
-                  <div className="text-xs text-gray-500 mb-1">विज्ञापन</div>
-                  {ad.linkUrl ? (
-                    <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
-                      <img 
-                        src={ad.imageUrl || ''} 
-                        alt={ad.title}
-                        className="mx-auto rounded-lg hover:opacity-90 transition-opacity"
-                        style={{ 
-                          maxWidth: Math.min(ad.width || 1892, 1892), 
-                          maxHeight: ad.height || 257,
-                          width: 'auto',
-                          height: 'auto'
-                        }}
-                      />
-                    </a>
-                  ) : (
-                    <img 
-                      src={ad.imageUrl || ''} 
-                      alt={ad.title}
-                      className="mx-auto rounded-lg"
-                      style={{ 
-                        maxWidth: Math.min(ad.width || 1892, 1892), 
-                        maxHeight: ad.height || 257,
-                        width: 'auto',
-                        height: 'auto'
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
+      {/* Static Header Advertisement Banner */}
+      <div className="bg-gray-50 border-t border-gray-200">
+        <div className="mx-auto px-4 py-3" style={{ maxWidth: LAYOUT_CONFIG.header.maxWidth }}>
+          <div className="text-center">
+            <div className="inline-block">
+              <div className="text-xs text-gray-500 mb-1">विज्ञापन</div>
+              <a href={staticHeaderAd.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                <img 
+                  src={staticHeaderAd.imageUrl} 
+                  alt={staticHeaderAd.title}
+                  className="mx-auto rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ 
+                    maxWidth: Math.min(staticHeaderAd.width, 1892), 
+                    maxHeight: staticHeaderAd.height,
+                    width: 'auto',
+                    height: 'auto'
+                  }}
+                />
+              </a>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }

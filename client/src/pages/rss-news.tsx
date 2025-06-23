@@ -42,10 +42,8 @@ export default function RSSNewsPage() {
     source.isActive && source.categoryId === currentCategory?.id
   );
 
-  // All RSS articles are already filtered by the API
-  const categoryArticles = currentCategory 
-    ? articles.filter(article => article.categoryId === currentCategory.id)
-    : articles;
+  // Display RSS articles - they're already filtered by the API endpoint
+  const categoryArticles = articles;
 
   return (
     <div className="min-h-screen bg-gray-50 font-hindi">
