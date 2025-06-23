@@ -62,9 +62,21 @@ export default function NewsCard({ article, category, featured = false }: NewsCa
             <h3 className="text-xl font-bold text-gray-900 mb-3 font-hindi leading-tight hover:text-red-600 transition-colors">
               {article.titleHindi}
             </h3>
-            <p className="text-gray-600 mb-4 font-hindi leading-relaxed">
+            <p className="text-gray-600 mb-3 font-hindi leading-relaxed">
               {article.excerptHindi}
             </p>
+            {article.hashtags && article.hashtags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {article.hashtags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-red-50 text-red-600 text-xs px-2 py-1 rounded-full border border-red-200 font-hindi"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
             <span className="text-red-600 font-semibold hover:text-red-700 font-hindi">
               पूरी खबर पढ़ें →
             </span>
@@ -107,9 +119,21 @@ export default function NewsCard({ article, category, featured = false }: NewsCa
             <h3 className="text-base font-bold text-gray-900 mb-2 font-hindi leading-tight hover:text-red-600 transition-colors">
               {article.titleHindi}
             </h3>
-            <p className="text-gray-600 text-sm font-hindi leading-relaxed line-clamp-2">
+            <p className="text-gray-600 text-sm font-hindi leading-relaxed line-clamp-2 mb-2">
               {article.excerptHindi}
             </p>
+            {article.hashtags && article.hashtags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {article.hashtags.slice(0, 3).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-red-50 text-red-600 text-xs px-1.5 py-0.5 rounded border border-red-200 font-hindi"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
             {article.authorName && (
               <div className="flex items-center mt-2 pt-2 border-t border-gray-100">
                 <span className="text-xs text-gray-500">लेखक:</span>

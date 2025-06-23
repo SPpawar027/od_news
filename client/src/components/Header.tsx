@@ -62,13 +62,13 @@ export default function Header() {
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Google Login Account Button */}
-            <button 
-              onClick={() => window.open('https://accounts.google.com/oauth/authorize?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope=openid%20email%20profile&response_type=code', '_blank')}
+            <Link
+              href="/account"
               className="flex items-center space-x-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <User className="w-4 h-4" />
               <span>Account</span>
-            </button>
+            </Link>
 
             {/* Date/Time Display */}
             <div className="hidden lg:block">

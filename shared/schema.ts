@@ -44,6 +44,7 @@ export const articles = pgTable("articles", {
   imageUrl: text("image_url"),
   authorName: text("author_name"),
   categoryId: integer("category_id").references(() => categories.id),
+  hashtags: text("hashtags").array(),
   isBreaking: boolean("is_breaking").default(false),
   isTrending: boolean("is_trending").default(false),
   publishedAt: timestamp("published_at"),
@@ -152,7 +153,7 @@ export const articleDrafts = pgTable("article_drafts", {
   imageUrl: text("image_url"),
   authorName: text("author_name"),
   categoryId: integer("category_id").references(() => categories.id),
-  tags: text("tags").array().default([]),
+  hashtags: text("hashtags").array().default([]),
   slug: text("slug"),
   status: text("status").default("draft"), // draft, scheduled, published
   scheduledAt: timestamp("scheduled_at"),

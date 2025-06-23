@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,9 +27,12 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
     imageUrl: article?.imageUrl || "",
     authorName: article?.authorName || "",
     categoryId: article?.categoryId || null,
+    hashtags: article?.hashtags || [],
     isBreaking: article?.isBreaking || false,
     isTrending: article?.isTrending || false,
   });
+
+  const [hashtagInput, setHashtagInput] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -209,6 +213,56 @@ export default function ArticleEditor({ article, onClose, onSave }: ArticleEdito
                   rows={12}
                   className="font-mono"
                 />
+              </div>
+
+              {/* Hashtags */}
+              <div>
+                <Label htmlFor="hashtags">हैशटैग (Hashtags)</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={hashtagInput}
+                      onChange={(e) => setHashtagInput(e.target.value)}
+                      placeholder="हैशटैग जोड़ें (# के बिना)..."
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (hashtagInput.trim() && !formData.hashtags.includes(hashtagInput.trim())) {
+                            handleInputChange("hashtags", [...formData.hashtags, hashtagInput.trim()]);
+                            setHashtagInput("");
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (hashtagInput.trim() && !formData.hashtags.includes(hashtagInput.trim())) {
+                          handleInputChange("hashtags", [...formData.hashtags, hashtagInput.trim()]);
+                          setHashtagInput("");
+                        }
+                      }}
+                    >
+                      जोड़ें
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.hashtags.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="px-2 py-1 text-xs cursor-pointer hover:bg-red-100"
+                        onClick={() => {
+                          const newTags = formData.hashtags.filter((_, i) => i !== index);
+                          handleInputChange("hashtags", newTags);
+                        }}
+                      >
+                        #{tag} ✕
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -81,6 +81,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (imageUrl && !imageUrl.startsWith('http')) {
                 imageUrl = null; // Ensure only valid URLs
               }
+
+              // Generate hashtags from article content
+              const generateHashtags = (title: string, content: string): string[] => {
+                const text = `${title} ${content}`.toLowerCase();
+                const hashtags: string[] = [];
+                
+                // News-related keywords in both English and Hindi
+                const keywords = {
+                  'politics': 'राजनीति',
+                  'economy': 'अर्थव्यवस्था',
+                  'business': 'व्यापार',
+                  'technology': 'तकनीक',
+                  'sports': 'खेल',
+                  'cricket': 'क्रिकेट',
+                  'bollywood': 'बॉलीवुड',
+                  'health': 'स्वास्थ्य',
+                  'education': 'शिक्षा',
+                  'weather': 'मौसम',
+                  'breaking': 'ब्रेकिंग',
+                  'news': 'समाचार'
+                };
+
+                // Check for keyword matches
+                Object.entries(keywords).forEach(([eng, hindi]) => {
+                  if (text.includes(eng) || text.includes(hindi)) {
+                    hashtags.push(hindi);
+                  }
+                });
+
+                // Add source-specific hashtags
+                if (source.name.includes('NDTV')) hashtags.push('NDTV');
+                if (source.name.includes('Times')) hashtags.push('टाइम्स');
+                if (source.name.includes('Economic')) hashtags.push('आर्थिक');
+
+                const uniqueHashtags = hashtags.filter((tag, index) => hashtags.indexOf(tag) === index);
+                return uniqueHashtags.slice(0, 5); // Limit to 5 unique hashtags
+              };
               
               const articleData = {
                 title: item.title || 'Untitled',
@@ -92,6 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 imageUrl: imageUrl,
                 authorName: item.creator || source.name || 'RSS Feed',
                 categoryId: source.categoryId || 1,
+                hashtags: generateHashtags(item.title || '', item.content || item.contentSnippet || ''),
                 isBreaking: false,
                 isTrending: false,
                 publishedAt: item.pubDate ? new Date(item.pubDate) : new Date()
@@ -646,6 +684,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
               imageUrl = baseUrl + imageUrl;
             }
             
+            // Generate hashtags from article content
+            const generateHashtags = (title: string, content: string): string[] => {
+              const text = `${title} ${content}`.toLowerCase();
+              const hashtags: string[] = [];
+              
+              // News-related keywords in both English and Hindi
+              const keywords = {
+                'politics': 'राजनीति',
+                'economy': 'अर्थव्यवस्था',
+                'business': 'व्यापार',
+                'technology': 'तकनीक',
+                'sports': 'खेल',
+                'cricket': 'क्रिकेट',
+                'bollywood': 'बॉलीवुड',
+                'health': 'स्वास्थ्य',
+                'education': 'शिक्षा',
+                'weather': 'मौसम',
+                'breaking': 'ब्रेकिंग',
+                'news': 'समाचार'
+              };
+
+              // Check for keyword matches
+              Object.entries(keywords).forEach(([eng, hindi]) => {
+                if (text.includes(eng) || text.includes(hindi)) {
+                  hashtags.push(hindi);
+                }
+              });
+
+              // Add source-specific hashtags
+              if (source.name.includes('NDTV')) hashtags.push('NDTV');
+              if (source.name.includes('Times')) hashtags.push('टाइम्स');
+              if (source.name.includes('Economic')) hashtags.push('आर्थिक');
+
+              const uniqueHashtags = hashtags.filter((tag, index) => hashtags.indexOf(tag) === index);
+              return uniqueHashtags.slice(0, 5); // Limit to 5 unique hashtags
+            };
+
             const articleData = {
               title: item.title || 'Untitled',
               titleHindi: item.title || 'शीर्षक नहीं',
@@ -656,6 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               imageUrl: imageUrl,
               authorName: item.creator || source.name || 'RSS Feed',
               categoryId: source.categoryId || 1,
+              hashtags: generateHashtags(item.title || '', item.content || item.contentSnippet || ''),
               isBreaking: false,
               isTrending: false,
               publishedAt: item.pubDate ? new Date(item.pubDate) : new Date()
