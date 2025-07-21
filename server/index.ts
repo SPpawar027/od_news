@@ -80,3 +80,14 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 })();
+
+const path = require('path');
+
+// Serve static files from React
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Catch-all for React routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
