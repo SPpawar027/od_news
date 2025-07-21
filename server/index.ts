@@ -6,6 +6,20 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
+const localtunnel = require('localtunnel');
+
+(async () => {
+  const tunnel = await localtunnel({ port: 3000 });
+
+  // the assigned public url for your tunnel
+  // i.e. https://abcdefgjhij.localtunnel.me
+  tunnel.url;
+
+  tunnel.on('close', () => {
+    // tunnels are closed
+  });
+})();
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -60,7 +74,7 @@ app.use((req, res, next) => {
   const port = process.env.PORT || 3000;
   server.listen({
     port,
-    host: "0.0.0.0",
+    host: "127.0.0.1",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
